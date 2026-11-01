@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 
 You write formal, authoritative Dispute Rebuttal Dossiers that strictly adhere to the evidentiary requirements of Visa, Mastercard, Stripe, PayPal, Razorpay, and merchant acquiring banks. Payment dispute analysts spend only 90 to 180 seconds reviewing evidence; your letter must be structured with crystalline clarity, quoting exact contractual clauses, citing milestone delivery dates from communication logs, and dismantling the client's false allegations point by point.
 
-Format the rebuttal dossier strictly into the following five formal sections:
+Format the rebuttal dossier strictly into the following six formal sections:
 
 # FORMAL CHARGEBACK DISPUTE REBUTTAL DOSSIER
 **DOCUMENT REF:** NYAYA-DISP-${Date.now().toString().slice(-6)}
@@ -93,6 +93,13 @@ Format the rebuttal dossier strictly into the following five formal sections:
 - Formal closing demand to the dispute analyst.
 - Demand the immediate and permanent reversal of the chargeback, full restoration of the withheld funds to the merchant's account, and nullification of dispute penalty fees.
 - Merchant formal verification statement.
+
+### SECTION VI: EVIDENCE ANCHOR MAP
+- Construct an explicit, ironclad cross-reference table that directly anchors governing contractual clauses to informal chat timestamps and approvals.
+- Format this section strictly as a Markdown Table with three columns:
+| Contractual Clause | Communication Timestamp | Evidentiary Conclusion |
+- Explicitly map the exact clause (e.g., "Clause 5.4 - Inspection") to the exact timestamp from the user's logs (e.g., "[Oct 13, 3:22 PM] Client: Looks great, push this live Monday").
+- Ensure the table leaves zero ambiguity for the dispute analyst by drawing decisive legal conclusions for each pair.
 
 Tone: Authoritative, objective, legally devastating, and strictly professional. No emotional rhetoric; rely purely on contractual facts and recorded timestamps.`;
 
@@ -277,7 +284,21 @@ The documentary evidence conclusively establishes that:
 - **Fund Release:** All withheld funds must be promptly restored to the Merchant's settlement account.
 - **Dispute Fee Nullification:** Any provisional dispute administration fees assessed against the Merchant must be rescinded.
 
+---
+
+### SECTION VI: EVIDENCE ANCHOR MAP
+
+| Contractual Clause | Communication Timestamp | Evidentiary Conclusion |
+|---|---|---|
+| **Clause 5.4 (Milestone Inspection Protocol)** | \`[Oct 13, 3:22 PM]\` Client: *"Tested everything with the team. Looks incredible — works perfectly! Push this live Monday."* | Irrevocable contractual sign-off executed. Dispute claim of "incomplete/defective delivery" is legally falsified by client's own written admission. |
+| **Clause 7.1 (Express Scope Exclusions)** | \`[Oct 18, 4:10 PM]\` Client: *"We also need a Salesforce sync and iOS push notifications before we pay."* | Client demand constitutes unauthorized scope creep expressly excluded by the executed agreement. |
+| **Clause 8.2 (Mandatory Change Orders)** | \`[Oct 19, 11:00 AM]\` Contractor provided formal Change Order quote; Client replied \`[Oct 22, 2:15 PM]\` threatening payment reversal. | Proves chargeback was filed in bad faith as retaliatory coercion to extract uncompensated out-of-scope labor. |
+| **Clause 11.2 (Non-Refundable Delivery Covenant)** | \`[Oct 16, 9:45 AM]\` Production handoff deployed live at apexventures.com per client directive. | Full source code transferred and deployed live; contract non-refundable covenant is fully active and binding. |
+
+---
+
 Respectfully submitted,  
 **Authorized Merchant Representative**  
 *Verified via Nyaya AI Legal Dossier Protocol*`;
 }
+

@@ -988,6 +988,92 @@ body::before {
 #rebuttal-pdf-content hr {
   border: 0; border-top: 1px solid #d1d5db; margin: 20px 0;
 }
+#rebuttal-pdf-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 8.5pt;
+  line-height: 1.5;
+}
+#rebuttal-pdf-content th {
+  background: #f1f5f9;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  text-align: left;
+  text-transform: uppercase;
+  font-size: 8pt;
+  letter-spacing: 0.3px;
+}
+#rebuttal-pdf-content td {
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  vertical-align: top;
+}
+#rebuttal-pdf-content tbody tr:nth-child(even) td {
+  background: #f8fafc;
+}
+#rebuttal-pdf-content code {
+  font-family: monospace;
+  background: #f1f5f9;
+  padding: 1px 4px;
+  font-size: 8pt;
+  color: #1d4ed8;
+  border-radius: 3px;
+}
+
+/* ─── Evidence Anchor Map Table (UI) ───────────────── */
+.table-container {
+  margin: 20px 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg1);
+  overflow-x: auto;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+.rebuttal-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.rebuttal-table th {
+  background: rgba(59,126,255,0.08);
+  color: #7badff;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.rebuttal-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: var(--text-2);
+  vertical-align: top;
+}
+.rebuttal-table tbody tr:nth-child(even) td {
+  background: rgba(255,255,255,0.015);
+}
+.rebuttal-table tbody tr:hover td {
+  background: rgba(59,126,255,0.04);
+}
+.rebuttal-table code {
+  background: var(--bg2);
+  color: #38bdf8;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.rebuttal-table strong {
+  color: #fff;
+}
 
 /* ─── Upgraded UI Extensions ───────────────────────── */
 
