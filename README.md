@@ -97,7 +97,7 @@ flowchart TD
     APIRoute -->|"3. Ephemeral Buffer Extraction"| PDFParser
     PDFParser -->|"4. Text Validation"| ScannedCheck
     ScannedCheck -->|"5. Raw Extracted Text"| PIIFilter
-    PIIFilter -->|"6. Sanitized Data (PII Redacted)"| PromptEngine
+    PIIFilter -->|"6. Sanitized Data - PII Redacted"| PromptEngine
     PromptEngine -->|"7. Structured 5-Section Payload"| NativeFetch
     NativeFetch -->|"8. Bearer Authenticated HTTP POST"| LLMEndpoint
     LLMEndpoint -->|"9. Sovereign Inference"| Model

@@ -31,17 +31,17 @@ graph TD
         Model["Model: qwen-3.8-27b"]
     end
 
-    Form -->|1. Multipart FormData (POST)| APIRoute
-    APIRoute -->|2. Binary Buffer Extraction| PDFParser
-    PDFParser -->|3. Extracted Contract Text| PromptEngine
-    PromptEngine -->|4. Constructed Payload| FetchClient
-    FetchClient -->|5. Native HTTP POST (Bearer Token)| LLM
-    LLM -->|6. Inference Evaluation| Model
-    Model -->|7. JSON Stream / Completion Response| FetchClient
-    FetchClient -->|8. Parsed Rebuttal String| APIRoute
+    Form -->|"1. Multipart FormData POST"| APIRoute
+    APIRoute -->|"2. Binary Buffer Extraction"| PDFParser
+    PDFParser -->|"3. Extracted Contract Text"| PromptEngine
+    PromptEngine -->|"4. Constructed Payload"| FetchClient
+    FetchClient -->|"5. Native HTTP POST Bearer Token"| LLM
+    LLM -->|"6. Inference Evaluation"| Model
+    Model -->|"7. JSON Stream Completion Response"| FetchClient
+    FetchClient -->|"8. Parsed Rebuttal String"| APIRoute
     APIRoute -->|"9. JSON Rebuttal Response"| UI
-    UI -->|10. Render Markdown| Preview
-    Preview -->|11. Trigger DOM Export| ExportPDF
+    UI -->|"10. Render Markdown"| Preview
+    Preview -->|"11. Trigger DOM Export"| ExportPDF
 ```
 
 ---
