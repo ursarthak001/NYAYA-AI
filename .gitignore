@@ -27,5 +27,5 @@ node_modules/
 
 # build and cache artifacts
 *.tsbuildinfo
-.netlify/
+.vercel/
 

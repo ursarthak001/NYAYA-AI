@@ -157,41 +157,25 @@ Click **"Generate Rebuttal Letter"** and watch Nyaya compile your dispute dossie
 
 ---
 
-## 🌐 Netlify Deployment Guide (BharatCode Build League)
+## 🌐 Vercel Deployment Guide (BharatCode Build League)
 
-Nyaya AI is configured for instant, zero-configuration deployment to Netlify via Next.js App Router and `@netlify/plugin-nextjs`.
+Nyaya AI is optimized for native zero-configuration deployment on **Vercel** with full Next.js 14 App Router, Serverless Functions, and streaming Route Handlers support.
 
-### 1. `netlify.toml` Configuration
-The project includes a production-ready [`netlify.toml`](file:///d:/opensource/New%20folder/netlify.toml) file:
-```toml
-[build]
-  command = "npm run build"
-  publish = ".next"
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-
-[functions]
-  node_bundler = "esbuild"
-  included_files = ["node_modules/pdf-parse/**"]
-
-[build.environment]
-  NODE_VERSION = "20"
-  NEXT_USE_NETLIFY_EDGE = "false"
-```
+### 1. Automatic Zero-Config Deployment
+Because Next.js and Vercel are built to work natively together, no custom adapter or configuration file is required. Vercel automatically detects the Next.js App Router, optimizes builds, and applies `export const maxDuration = 60` for serverless AI route handlers.
 
 ### 2. Secure Server-Side Environment Variables
 > [!IMPORTANT]
-> **Strict Secret Protection:** `BHARATCODE_API_KEY` must **NEVER** have the `NEXT_PUBLIC_` prefix. This restricts the secret strictly to serverless execution environments and build-time Node.js processes, preventing leakage to client browsers.
+> **Strict Secret Protection:** `BHARATCODE_API_KEY` must **NEVER** use the `NEXT_PUBLIC_` prefix. This keeps the sovereign API secret strictly inside Vercel's serverless Node.js runtime and prevents it from ever being bundled into client-side JavaScript.
 
-1. Navigate to your site on **Netlify Dashboard** -> **Site configuration** -> **Environment variables**.
-2. Click **Add a variable** -> **Add a single variable**:
+1. In your **Vercel Dashboard**, open your project ➔ **Settings** ➔ **Environment Variables**.
+2. Add a new variable:
    - **Key:** `BHARATCODE_API_KEY`
    - **Value:** `<your-sovereign-bharatcode-api-key>`
-   - **Scopes:** Select *Builds*, *Functions*, and *Runtime*.
-3. Trigger a deploy from the `main` branch or run:
+   - **Environments:** Check *Production*, *Preview*, and *Development*.
+3. Click **Save** and trigger a deployment from the `main` branch:
    ```bash
-   npx netlify deploy --prod
+   vercel --prod
    ```
 
 ---
