@@ -39,7 +39,7 @@ graph TD
     LLM -->|6. Inference Evaluation| Model
     Model -->|7. JSON Stream / Completion Response| FetchClient
     FetchClient -->|8. Parsed Rebuttal String| APIRoute
-    APIRoute -->|9. JSON Response { success, rebuttal }| UI
+    APIRoute -->|"9. JSON Rebuttal Response"| UI
     UI -->|10. Render Markdown| Preview
     Preview -->|11. Trigger DOM Export| ExportPDF
 ```

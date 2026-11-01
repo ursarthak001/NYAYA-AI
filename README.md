@@ -76,7 +76,7 @@ flowchart TD
 
     subgraph SecurityShield ["Edge & Route Security Layer"]
         RateLimit["Rate Limiter (Upstash Redis: 5 req/hr/IP)"]
-        ScannedCheck["Scanned PDF Detection (length >= 50 chars)"]
+        ScannedCheck["Scanned PDF Detection (Min 50 Characters)"]
         PIIFilter["PII Sanitizer (SSN & Credit Card Redactor)"]
     end
 
@@ -92,20 +92,20 @@ flowchart TD
         Model["Model: qwen-3.8-27b"]
     end
 
-    UI -->|1. FormData POST + Clickwrap Consent| RateLimit
-    RateLimit -->|2. Verified Request Under Quota| APIRoute
-    APIRoute -->|3. Ephemeral Buffer Extraction| PDFParser
-    PDFParser -->|4. Text Validation| ScannedCheck
-    ScannedCheck -->|5. Raw Extracted Text| PIIFilter
-    PIIFilter -->|6. Redacted Data [REDACTED_PII]| PromptEngine
-    PromptEngine -->|7. Structured 5-Section Payload| NativeFetch
-    NativeFetch -->|8. Bearer Authenticated HTTP POST| LLMEndpoint
-    LLMEndpoint -->|9. Sovereign Inference| Model
-    Model -->|10. JSON Stream Completion| NativeFetch
-    NativeFetch -->|11. Parsed Rebuttal String| APIRoute
-    APIRoute -->|12. JSON Response { success, rebuttal }| UI
-    UI -->|13. Hydrate UI| Viewer
-    Viewer -->|14. Trigger DOM Render| ExportPDF
+    UI -->|"1. FormData POST + Clickwrap Consent"| RateLimit
+    RateLimit -->|"2. Verified Request Under Quota"| APIRoute
+    APIRoute -->|"3. Ephemeral Buffer Extraction"| PDFParser
+    PDFParser -->|"4. Text Validation"| ScannedCheck
+    ScannedCheck -->|"5. Raw Extracted Text"| PIIFilter
+    PIIFilter -->|"6. Sanitized Data (PII Redacted)"| PromptEngine
+    PromptEngine -->|"7. Structured 5-Section Payload"| NativeFetch
+    NativeFetch -->|"8. Bearer Authenticated HTTP POST"| LLMEndpoint
+    LLMEndpoint -->|"9. Sovereign Inference"| Model
+    Model -->|"10. JSON Stream Completion"| NativeFetch
+    NativeFetch -->|"11. Parsed Rebuttal String"| APIRoute
+    APIRoute -->|"12. JSON Rebuttal Response"| UI
+    UI -->|"13. Hydrate UI State"| Viewer
+    Viewer -->|"14. Trigger DOM Render"| ExportPDF
 ```
 
 ---
