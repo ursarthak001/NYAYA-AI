@@ -1,0 +1,1 @@
+This repository is an official submission for the BharatCode Build League hackathon. It utilizes the BharatCode sovereign model API running the qwen-3.8-27b model for its core intelligent dispute analysis and legal rebuttal generation functionality.
