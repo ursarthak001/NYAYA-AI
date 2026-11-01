@@ -1,12 +1,80 @@
 export const maxDuration = 60; // Allow the API route to run for up to 60 seconds
 
 import { NextRequest, NextResponse } from 'next/server';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// ─── Rate Limiter Configuration (5 requests per 1 hour per IP) ──
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? Redis.fromEnv()
+    : new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL || 'https://placeholder.upstash.io',
+        token: process.env.UPSTASH_REDIS_REST_TOKEN || 'placeholder',
+      });
+
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, '1 h'),
+  analytics: true,
+});
+
+// In-memory fallback rate limiter for development environments without live Upstash Redis
+const inMemoryRateLimits = new Map<string, { count: number; expiresAt: number }>();
+
+function checkInMemoryRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const windowMs = 60 * 60 * 1000; // 1 hour
+  const record = inMemoryRateLimits.get(ip);
+  if (!record || now > record.expiresAt) {
+    inMemoryRateLimits.set(ip, { count: 1, expiresAt: now + windowMs });
+    return true;
+  }
+  if (record.count >= 5) {
+    return false;
+  }
+  record.count += 1;
+  return true;
+}
+
+/**
+ * Redacts Social Security Numbers (XXX-XX-XXXX) and Credit Card numbers (14-16 digits)
+ */
+function sanitizePII(text: string): string {
+  if (!text) return text;
+  // Match SSNs: XXX-XX-XXXX
+  const ssnRegex = /\b\d{3}-\d{2}-\d{4}\b/g;
+  // Match Credit Cards: 14 to 16 digits, with optional spaces or dashes
+  const ccRegex = /\b(?:\d[ -]?){13,15}\d\b/g;
+  return text.replace(ssnRegex, '[REDACTED_PII]').replace(ccRegex, '[REDACTED_PII]');
+}
+
 export async function POST(req: NextRequest) {
   try {
+    // ─── Rate Limiting (5 per hour per IP) ───────────────────
+    const forwardedFor = req.headers.get('x-forwarded-for');
+    const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : '127.0.0.1';
+
+    try {
+      const { success } = await ratelimit.limit(ip);
+      if (!success) {
+        return NextResponse.json(
+          { success: false, error: 'Rate limit exceeded. Maximum 5 requests per hour.' },
+          { status: 429 }
+        );
+      }
+    } catch {
+      const allowed = checkInMemoryRateLimit(ip);
+      if (!allowed) {
+        return NextResponse.json(
+          { success: false, error: 'Rate limit exceeded. Maximum 5 requests per hour.' },
+          { status: 429 }
+        );
+      }
+    }
     const formData = await req.formData();
 
     const disputeDescription = (formData.get('disputeDescription') as string | null) || '';
@@ -33,6 +101,7 @@ export async function POST(req: NextRequest) {
 
     // If a PDF file was uploaded, extract its text using pdf-parse
     if (contractFile && contractFile.size > 0) {
+      let extractedText = '';
       try {
         const arrayBuffer = await contractFile.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
@@ -45,7 +114,8 @@ export async function POST(req: NextRequest) {
           pdfParse = require('pdf-parse');
         }
         const pdfResult = await pdfParse(buffer);
-        parsedContractText = pdfResult.text.trim();
+        extractedText = pdfResult.text || '';
+        parsedContractText = extractedText.trim();
         console.log(`[PDF Ingestion] Successfully parsed PDF (${(contractFile.size / 1024).toFixed(1)} KB, ${parsedContractText.length} chars)`);
       } catch (pdfErr: any) {
         console.error('Error parsing contract PDF:', pdfErr);
@@ -58,6 +128,17 @@ export async function POST(req: NextRequest) {
             { status: 422 }
           );
         }
+      }
+
+      // Scanned PDF Protection: verify readable text content
+      if (extractedText.trim().length < 50) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'No readable text found. Please ensure your PDF is a text document, not a scanned image.',
+          },
+          { status: 400 }
+        );
       }
     }
 
@@ -92,20 +173,25 @@ export async function POST(req: NextRequest) {
         '\n\n[... Remaining communication logs truncated for model context limit ...]';
     }
 
+    // ─── PII Sanitization ───────────────────────────────────
+    // Redact SSNs and Credit Card numbers from extracted text and communication history
+    const sanitizedContract = sanitizePII(sanitizedContractText);
+    const sanitizedLogs = sanitizePII(sanitizedComms);
+
     // ─── Formal System Prompt ──────────────────────────────
-    const systemPrompt = `You are Nyaya AI, a senior commercial contracts attorney and payment gateway dispute arbitrator. Your mission is to defend merchants against chargebacks.
+    const systemPrompt = `You are Nyaya AI, an administrative dispute formatting assistant. Do not refer to yourself as an attorney, lawyer, or legal counsel. Your mission is to help merchants format evidence against chargebacks.
 
-CRITICAL LEGAL CONSTRAINTS (ANTI-HALLUCINATION & EVIDENCE INTEGRITY):
-1. VERBATIM CITATION MANDATE: Every claim of client approval, milestone acceptance, or deliverable submission MUST directly quote a timestamped line from the provided COMMUNICATION LOGS. You are strictly forbidden from paraphrasing.
-2. ZERO-INFERENCE RULE: Under no circumstances may you invent, infer, or hallucinate client approvals. If the provided logs lack explicit written sign-off for a milestone, you must state exactly: "No explicit written approval found in provided logs."
-3. MISSING EVIDENCE WARNING: If the buyer's Dispute Reason involves "Service Not Rendered" and no hard proof of delivery (e.g., Git commit hashes, deployment URLs, or design handoff links) is found in the logs, you MUST explicitly flag this by generating a bolded "**MISSING DOCUMENTATION WARNING:**" at the very top of the dossier.
+CRITICAL CONSTRAINTS (ANTI-HALLUCINATION & EVIDENCE INTEGRITY):
+1. VERBATIM CITATION MANDATE: Every claim of client approval or deliverable submission MUST directly quote a timestamped line from the provided COMMUNICATION LOGS. You are strictly forbidden from paraphrasing.
+2. ZERO-INFERENCE RULE: Under no circumstances may you invent or hallucinate client approvals. If logs lack explicit written sign-off, you must state exactly: "No explicit written approval found in provided logs."
+3. MISSING EVIDENCE WARNING: If the Dispute Reason involves "Service Not Rendered" and no hard proof of delivery is found, you MUST explicitly flag this by generating a bolded "**MISSING DOCUMENTATION WARNING:**" at the top of the dossier.
 
-Structure the rebuttal with these five formal sections:
-1. EXECUTIVE SUMMARY & TRANSACTION DECLARATION
-2. CONTRACTUAL PROVISIONS & SCOPE DEFINITION (Direct quotes only)
-3. TIMELINE OF DELIVERABLES & WRITTEN ACCEPTANCE (Direct quotes only)
-4. SYSTEMATIC REBUTTAL OF BUYER ALLEGATIONS
-5. FORMAL CONCLUSION & DEMAND FOR IMMEDIATE DISPUTE DISMISSAL`;
+Structure the rebuttal into five sections:
+1. EXECUTIVE SUMMARY
+2. CONTRACTUAL PROVISIONS (Direct quotes only)
+3. TIMELINE OF ACCEPTANCE (Direct quotes only)
+4. REBUTTAL OF ALLEGATIONS
+5. CONCLUSION & DEMAND FOR DISMISSAL`;
 
     const userPrompt = `Please synthesize an unassailable Dispute Rebuttal Dossier using the following authenticated project records:
 
@@ -117,12 +203,12 @@ ${disputeDescription}
 ========================================
 2. EXTRACTED CONTRACT / STATEMENT OF WORK (SOW)
 ========================================
-${sanitizedContractText || '[No contract text provided]'}
+${sanitizedContract || '[No contract text provided]'}
 
 ========================================
 3. COMMUNICATION LOGS & MILESTONE AUDIT TRAIL
 ========================================
-${sanitizedComms || '[No communication history provided]'}
+${sanitizedLogs || '[No communication history provided]'}
 `;
 
     const apiKey = process.env.BHARATCODE_API_KEY;
@@ -130,7 +216,7 @@ ${sanitizedComms || '[No communication history provided]'}
     // Check if live API key is provided and not the placeholder
     if (!apiKey || apiKey === 'your_bharatcode_api_key_here' || apiKey === 'test_bharatcode_key_demo') {
       console.log('[Nyaya AI] No live BharatCode API key detected. Using local arbitration template.');
-      const demoRebuttal = generateDemoRebuttal(disputeDescription, sanitizedContractText, sanitizedComms);
+      const demoRebuttal = generateDemoRebuttal(disputeDescription, sanitizedContract, sanitizedLogs);
       return NextResponse.json({
         success: true,
         rebuttal: demoRebuttal,
@@ -178,7 +264,7 @@ ${sanitizedComms || '[No communication history provided]'}
       if (networkErr.name === 'AbortError') {
         // Fallback to high-fidelity rebuttal if network timed out
         console.warn('[BharatCode API] Upstream timeout reached. Serving resilient synthesized rebuttal.');
-        const fallbackRebuttal = generateDemoRebuttal(disputeDescription, sanitizedContractText, sanitizedComms);
+        const fallbackRebuttal = generateDemoRebuttal(disputeDescription, sanitizedContract, sanitizedLogs);
         return NextResponse.json({
           success: true,
           rebuttal: fallbackRebuttal,
@@ -244,7 +330,7 @@ ${sanitizedComms || '[No communication history provided]'}
       console.error('[BharatCode API] Empty or invalid completion received:', JSON.stringify(data, null, 2));
       console.warn('[Nyaya AI] Activating resilient synthesized fallback rebuttal to prevent user disruption.');
 
-      const synthesizedFallback = generateDemoRebuttal(disputeDescription, sanitizedContractText, sanitizedComms);
+      const synthesizedFallback = generateDemoRebuttal(disputeDescription, sanitizedContract, sanitizedLogs);
       return NextResponse.json({
         success: true,
         rebuttal: synthesizedFallback,
@@ -368,5 +454,5 @@ The documentary evidence conclusively establishes that:
 
 Respectfully submitted,  
 **Authorized Merchant Representative**  
-*Verified via Nyaya AI Legal Dossier Protocol*`;
+*Verified via Nyaya AI Administrative Dossier Protocol*`;
 }

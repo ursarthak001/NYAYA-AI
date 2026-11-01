@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 export function Footer() {
   return (
@@ -9,7 +10,9 @@ export function Footer() {
         <div className="footer-sep" />
         <span>Native fetch · Zero external SDKs</span>
         <div className="footer-sep" />
-        <span>Complies with BharatCode.txt</span>
+        <Link href="/terms" style={{ color: 'var(--text-3)', textDecoration: 'underline' }}>
+          Terms &amp; Privacy
+        </Link>
       </div>
     </footer>
   );

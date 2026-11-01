@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import { AlertCircle, X, CheckCircle2 } from 'lucide-react';
 import { GatewayType, DisputePreset, ApiHealthState, EvidentiaryMetrics } from '@/types';
 import { PRESETS } from '@/lib/constants';
@@ -29,6 +30,7 @@ export default function Page() {
   const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [apiHealth, setApiHealth] = useState<ApiHealthState | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const resultRef = useRef<HTMLDivElement>(null);
   const hasContract = !!(file || contractText);
@@ -107,6 +109,7 @@ export default function Page() {
     setResult(null);
     setError(null);
     setActivePreset(null);
+    setAgreedToTerms(false);
     showToast('Cleared all dispute inputs');
   }, [showToast]);
 
@@ -129,6 +132,10 @@ export default function Page() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms of Service and Privacy Policy before proceeding.');
+      return;
+    }
     if (!dispute.trim()) {
       setError('Please describe the dispute or chargeback claim.');
       return;
@@ -247,6 +254,36 @@ export default function Page() {
               phase={phase}
               activeGateway={activeGateway}
               hasContract={hasContract}
+              agreedToTerms={agreedToTerms}
+              setAgreedToTerms={setAgreedToTerms}
+              termsCheckbox={
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 8,
+                    fontSize: 12,
+                    color: 'var(--text-2)',
+                    cursor: 'pointer',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    style={{ marginTop: 2, accentColor: '#3b7eff', cursor: 'pointer' }}
+                    required
+                  />
+                  <span>
+                    I understand Nyaya AI is an administrative formatting tool, not a law firm, and this does not constitute legal advice. I agree to the{' '}
+                    <Link href="/terms" style={{ color: '#7badff', textDecoration: 'underline' }}>
+                      Terms of Service and Privacy Policy
+                    </Link>
+                    .
+                  </span>
+                </label>
+              }
             >
               <p className="text-xs text-gray-500 mt-2 text-center">
                 Files are processed entirely in-memory and never saved to our databases. However, extracted text is securely transmitted to the BharatCode API for AI processing. Do not upload files containing highly sensitive PII (Social Security Numbers, Credit Cards).

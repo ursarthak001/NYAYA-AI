@@ -11,7 +11,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Nyaya — AI Dispute Defense for Freelancers & Merchants',
   description:
-    'Upload your contract, paste communication logs, and generate a professional, legally-sound chargeback rebuttal letter in seconds. Powered by BharatCode qwen-3.8-27b.',
+    'Upload your contract, paste communication logs, and generate an administrative, bank-compliant chargeback rebuttal letter in seconds. Powered by BharatCode qwen-3.8-27b.',
 };
 
 export default function RootLayout({

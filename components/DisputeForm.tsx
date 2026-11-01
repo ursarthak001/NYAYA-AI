@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
+import Link from 'next/link';
 import {
   MessageSquare,
   FileText,
@@ -26,6 +27,9 @@ interface DisputeFormProps {
   activeGateway: GatewayType;
   hasContract: boolean;
   children?: React.ReactNode;
+  agreedToTerms?: boolean;
+  setAgreedToTerms?: (val: boolean) => void;
+  termsCheckbox?: React.ReactNode;
 }
 
 export function DisputeForm({
@@ -42,6 +46,9 @@ export function DisputeForm({
   activeGateway,
   hasContract,
   children,
+  agreedToTerms = false,
+  setAgreedToTerms = () => {},
+  termsCheckbox,
 }: DisputeFormProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -167,8 +174,40 @@ export function DisputeForm({
         </div>
       </div>
 
+      {/* Clickwrap Agreement Checkbox */}
+      <div className="terms-checkbox-wrap" style={{ marginBottom: 14 }}>
+        {termsCheckbox || (
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 8,
+              fontSize: 12,
+              color: 'var(--text-2)',
+              cursor: 'pointer',
+              lineHeight: 1.5,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              style={{ marginTop: 2, accentColor: '#3b7eff', cursor: 'pointer' }}
+              required
+            />
+            <span>
+              I understand Nyaya AI is an administrative formatting tool, not a law firm, and this does not constitute legal advice. I agree to the{' '}
+              <Link href="/terms" style={{ color: '#7badff', textDecoration: 'underline' }}>
+                Terms of Service and Privacy Policy
+              </Link>
+              .
+            </span>
+          </label>
+        )}
+      </div>
+
       {/* Submit Button */}
-      <button type="submit" className="btn-primary" disabled={loading}>
+      <button type="submit" className="btn-primary" disabled={loading || !agreedToTerms}>
         {loading ? (
           <>
             <Loader2 size={16} className="spinner" />
