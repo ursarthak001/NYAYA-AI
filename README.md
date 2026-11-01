@@ -31,8 +31,8 @@
 +-----------------------------------------------------------------------------------+
 ```
 
-### Try Live Locally:
-1. Open [http://localhost:3000](http://localhost:3000)
+### Quick Demo Walkthrough:
+1. Launch the local development server.
 2. Click **"⚡ Load Sample Dispute"** to test a pre-configured Stripe scope creep dispute.
 3. Review the dynamically generated **Evidence Anchor Map** and **Five-Pillar Dossier**.
 4. Inspect the official [Terms of Service & Privacy Policy](/terms) page.
@@ -202,7 +202,7 @@ BHARATCODE_API_KEY=your_bharatcode_api_key_here
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+The application will start on your configured local port (default: 3000).
 
 ---
 
