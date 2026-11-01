@@ -247,7 +247,11 @@ export default function Page() {
               phase={phase}
               activeGateway={activeGateway}
               hasContract={hasContract}
-            />
+            >
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Files are processed entirely in-memory and never saved to our databases. However, extracted text is securely transmitted to the BharatCode API for AI processing. Do not upload files containing highly sensitive PII (Social Security Numbers, Credit Cards).
+              </p>
+            </DisputeForm>
           </div>
 
           {/* Right Column: Evidentiary Meter & Feature Highlights */}

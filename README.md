@@ -150,10 +150,11 @@ Click **"Generate Rebuttal Letter"** and watch Nyaya compile your dispute dossie
 
 ---
 
-## 🔒 Security & Privacy by Design
+## 🔒 Security & Privacy Guarantees
 - **Zero Disk Retention:** Uploaded contracts and communication logs are handled strictly in transient RAM.
 - **Ephemeral Processing:** Files are converted to buffers, parsed, injected into the inference payload, and immediately collected by runtime garbage collection.
-- **Server-Side API Key Isolation:** `BHARATCODE_API_KEY` is never leaked to the client bundle.
+- **Server-Side API Key Isolation:** `BHARATCODE_API_KEY` is never leaked to the client bundle.
+- **Third-Party Processing Boundary:** While Nyaya AI operates a strict internal Zero Data Retention policy (processing files as ephemeral Node.js buffers), the extracted contract text and communication logs are transmitted securely via HTTP POST to the external BharatCode Gateway (`https://bharatcode.ai/api/model/v1/chat/completions`) for LLM inference. Users must review BharatCode's platform policies regarding prompt logging and training data retention before uploading sensitive client agreements.
 
 ---
 

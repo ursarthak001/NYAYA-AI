@@ -164,3 +164,4 @@ Authorization: Bearer <BHARATCODE_API_KEY>
 2. **In-Memory Buffering:** Files are received as streaming `FormData`, converted to ephemeral Node.js buffers for `pdf-parse`, and discarded upon garbage collection.
 3. **Environment Security:** `BHARATCODE_API_KEY` is loaded strictly on the server runtime via `process.env`, never exposed to the client bundle.
 4. **CORS & CSRF Isolation:** Serverless route handler accepts requests strictly from the same origin.
+- **Third-Party Processing Boundary:** While Nyaya AI operates a strict internal Zero Data Retention policy (processing files as ephemeral Node.js buffers), the extracted contract text and communication logs are transmitted securely via HTTP POST to the external BharatCode Gateway (`https://bharatcode.ai/api/model/v1/chat/completions`) for LLM inference. Users must review BharatCode's platform policies regarding prompt logging and training data retention before uploading sensitive client agreements.
