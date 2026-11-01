@@ -45,8 +45,9 @@ Every year, freelancers, independent software developers, and small merchants lo
 
 - 📄 **Contract Ingestion Engine:** Upload your executed Master Services Agreement or Statement of Work (`.pdf`). Nyaya parses clauses, scope terms, milestones, and change-order provisions in volatile memory via serverless `pdf-parse`.
 - 💬 **Timeline Cross-Examination:** Paste raw communication threads (Slack, WhatsApp, Email). Nyaya chronologically anchors dates, deliverables, and explicit client approvals.
+- 🗺️ **Evidence Anchor Map (Killer Feature):** Directly binds strict contractual clauses to informal chat timestamps in a structured 3-column verification matrix, making client sign-offs undeniable to dispute investigators.
 - 🧠 **Sovereign Intelligence (`qwen-3.8-27b`):** Directly integrated with the **BharatCode LLM API** (`https://bharatcode.ai/api/model/v1/chat/completions`), Nyaya cross-examines client claims against contract clauses with surgical precision.
-- 📑 **Five-Pillar Bank-Grade Evidentiary Dossier:** Synthesizes an official dispute letter formatted to Visa, Mastercard, and Stripe dispute evaluation standards.
+- 📑 **Six-Section Bank-Grade Evidentiary Dossier:** Synthesizes an official dispute letter formatted to Visa, Mastercard, and Stripe dispute evaluation standards.
 - 📥 **One-Click Client PDF Export:** Instantly downloads a clean, formal legal PDF ready to be uploaded directly to Stripe, PayPal, or bank dispute portals.
 
 ---
@@ -153,6 +154,45 @@ Click **"Generate Rebuttal Letter"** and watch Nyaya compile your dispute dossie
 - **Zero Disk Retention:** Uploaded contracts and communication logs are handled strictly in transient RAM.
 - **Ephemeral Processing:** Files are converted to buffers, parsed, injected into the inference payload, and immediately collected by runtime garbage collection.
 - **Server-Side API Key Isolation:** `BHARATCODE_API_KEY` is never leaked to the client bundle.
+
+---
+
+## 🌐 Netlify Deployment Guide (BharatCode Build League)
+
+Nyaya AI is configured for instant, zero-configuration deployment to Netlify via Next.js App Router and `@netlify/plugin-nextjs`.
+
+### 1. `netlify.toml` Configuration
+The project includes a production-ready [`netlify.toml`](file:///d:/opensource/New%20folder/netlify.toml) file:
+```toml
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["node_modules/pdf-parse/**"]
+
+[build.environment]
+  NODE_VERSION = "20"
+  NEXT_USE_NETLIFY_EDGE = "false"
+```
+
+### 2. Secure Server-Side Environment Variables
+> [!IMPORTANT]
+> **Strict Secret Protection:** `BHARATCODE_API_KEY` must **NEVER** have the `NEXT_PUBLIC_` prefix. This restricts the secret strictly to serverless execution environments and build-time Node.js processes, preventing leakage to client browsers.
+
+1. Navigate to your site on **Netlify Dashboard** -> **Site configuration** -> **Environment variables**.
+2. Click **Add a variable** -> **Add a single variable**:
+   - **Key:** `BHARATCODE_API_KEY`
+   - **Value:** `<your-sovereign-bharatcode-api-key>`
+   - **Scopes:** Select *Builds*, *Functions*, and *Runtime*.
+3. Trigger a deploy from the `main` branch or run:
+   ```bash
+   npx netlify deploy --prod
+   ```
 
 ---
 

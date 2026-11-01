@@ -24,3 +24,8 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# build and cache artifacts
+*.tsbuildinfo
+.netlify/
+
