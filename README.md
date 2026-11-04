@@ -75,9 +75,10 @@ flowchart TD
     end
 
     subgraph SecurityShield ["Edge & Route Security Layer"]
-        RateLimit["Rate Limiter (Upstash Redis: 5 req/hr/IP)"]
+        RateLimit["Rate Limiter (Upstash Redis: 5 req/hr per IP)"]
+        FileSizeCheck["File Size Validation (Max 5MB OOM Protection)"]
         ScannedCheck["Scanned PDF Detection (Min 50 Characters)"]
-        PIIFilter["PII Sanitizer (SSN & Credit Card Redactor)"]
+        PIIFilter["In-Memory PII Regex (Credit Cards, SSN, Emails)"]
     end
 
     subgraph Serverless ["Next.js Serverless Runtime (Node.js)"]
@@ -94,18 +95,19 @@ flowchart TD
 
     UI -->|"1. FormData POST + Clickwrap Consent"| RateLimit
     RateLimit -->|"2. Verified Request Under Quota"| APIRoute
-    APIRoute -->|"3. Ephemeral Buffer Extraction"| PDFParser
-    PDFParser -->|"4. Text Validation"| ScannedCheck
-    ScannedCheck -->|"5. Raw Extracted Text"| PIIFilter
-    PIIFilter -->|"6. Sanitized Data - PII Redacted"| PromptEngine
-    PromptEngine -->|"7. Structured 5-Section Payload"| NativeFetch
-    NativeFetch -->|"8. Bearer Authenticated HTTP POST"| LLMEndpoint
-    LLMEndpoint -->|"9. Sovereign Inference"| Model
-    Model -->|"10. JSON Stream Completion"| NativeFetch
-    NativeFetch -->|"11. Parsed Rebuttal String"| APIRoute
-    APIRoute -->|"12. JSON Rebuttal Response"| UI
-    UI -->|"13. Hydrate UI State"| Viewer
-    Viewer -->|"14. Trigger DOM Render"| ExportPDF
+    APIRoute -->|"3. Buffer Inspection"| FileSizeCheck
+    FileSizeCheck -->|"4. Valid File Size Under 5MB"| PDFParser
+    PDFParser -->|"5. Text Validation"| ScannedCheck
+    ScannedCheck -->|"6. Raw Extracted Text"| PIIFilter
+    PIIFilter -->|"7. Sanitized Data - PII Redacted"| PromptEngine
+    PromptEngine -->|"8. Structured 5-Section Payload"| NativeFetch
+    NativeFetch -->|"9. Bearer Authenticated HTTP POST"| LLMEndpoint
+    LLMEndpoint -->|"10. Sovereign Inference"| Model
+    Model -->|"11. JSON Stream Completion"| NativeFetch
+    NativeFetch -->|"12. Parsed Rebuttal String"| APIRoute
+    APIRoute -->|"13. JSON Rebuttal Response"| UI
+    UI -->|"14. Hydrate UI State"| Viewer
+    Viewer -->|"15. Trigger DOM Render"| ExportPDF
 ```
 
 ---
@@ -129,14 +131,16 @@ Nyaya synthesizes disputes into a standardized five-section administrative dossi
 ### 1. Zero Data Retention & Memory Isolation
 - No contract files or message histories are ever stored on disk, persistent caches, or databases.
 - Files are parsed directly from streaming Node.js `Buffer` objects in volatile memory and discarded upon garbage collection.
+- **5MB File Size OOM Protection:** Files larger than 5MB are rejected prior to buffer processing to prevent serverless memory exhaustion attacks.
 
-### 2. Automatic PII Redaction (`sanitizePII`)
-- Built-in regex sanitization inspects all extracted contract text and communication logs before network transmission:
-  - **US Social Security Numbers:** `\b\d{3}-\d{2}-\d{4}\b` ➔ `[REDACTED_PII]`
-  - **Credit Card Numbers:** 14–16 digit grouped/contiguous sequences ➔ `[REDACTED_PII]`
+### 2. In-Memory PII Redaction (`sanitizePII`)
+- Built-in regex sanitization inspects all extracted contract text, dispute descriptions, and communication logs before LLM prompt assembly:
+  - **US Social Security Numbers:** `\b\d{3}[ -]?\d{2}[ -]?\d{4}\b` ➔ `[REDACTED_PII]`
+  - **Credit Card Numbers:** 13–16 digit grouped/contiguous sequences ➔ `[REDACTED_PII]`
+  - **Standard Email Addresses:** `\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b` ➔ `[REDACTED_PII]`
 
 ### 3. Upstash Redis Rate Limiting
-- Prevents API abuse and token exhaustion by enforcing a strict **5 requests per hour per IP** policy using `@upstash/ratelimit` with a sliding window.
+- Prevents API abuse and token exhaustion by enforcing a strict **5 requests per hour per IP** policy (with fallback to `'anonymous'`) using `@upstash/ratelimit` with a sliding window.
 - Gracefully falls back to an in-memory rate limiter during local development or offline test execution.
 
 ### 4. Scanned PDF Protection
@@ -190,11 +194,11 @@ cp .env.example .env.local
 Configure your environment keys (all keys are kept server-side and never exposed to the client):
 ```env
 # Required: BharatCode Sovereign Model Gateway Key
-BHARATCODE_API_KEY=your_bharatcode_api_key_here
+BHARATCODE_API_KEY=your_new_secure_api_key_here
 
-# Optional: Upstash Redis Rate Limiting (5 requests/hour/IP)
-# UPSTASH_REDIS_REST_URL=https://your-upstash-instance.upstash.io
-# UPSTASH_REDIS_REST_TOKEN=your_upstash_rest_token_here
+# Upstash Redis Rate Limiting (5 requests/hour/IP)
+UPSTASH_REDIS_REST_URL=https://your-upstash-instance.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_upstash_rest_token_here
 ```
 
 ### 4. Run the Development Server

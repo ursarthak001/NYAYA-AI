@@ -41,28 +41,35 @@ function checkInMemoryRateLimit(ip: string): boolean {
 }
 
 /**
- * Redacts Social Security Numbers (XXX-XX-XXXX) and Credit Card numbers (14-16 digits)
+ * In-Memory PII Redactor: Scrubs Credit Card numbers (13-16 digits),
+ * Social Security Numbers (XXX-XX-XXXX), and standard email addresses.
  */
 function sanitizePII(text: string): string {
   if (!text) return text;
-  // Match SSNs: XXX-XX-XXXX
-  const ssnRegex = /\b\d{3}-\d{2}-\d{4}\b/g;
-  // Match Credit Cards: 14 to 16 digits, with optional spaces or dashes
-  const ccRegex = /\b(?:\d[ -]?){13,15}\d\b/g;
-  return text.replace(ssnRegex, '[REDACTED_PII]').replace(ccRegex, '[REDACTED_PII]');
+  // Match SSNs: XXX-XX-XXXX or XXX XX XXXX
+  const ssnRegex = /\b\d{3}[ -]?\d{2}[ -]?\d{4}\b/g;
+  // Match Credit Cards: 13 to 16 digits with optional spaces or hyphens
+  const ccRegex = /\b(?:\d[ -]?){13,16}\b/g;
+  // Match standard email formats
+  const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
+
+  return text
+    .replace(ssnRegex, '[REDACTED_PII]')
+    .replace(ccRegex, '[REDACTED_PII]')
+    .replace(emailRegex, '[REDACTED_PII]');
 }
 
 export async function POST(req: NextRequest) {
   try {
     // ─── Rate Limiting (5 per hour per IP) ───────────────────
     const forwardedFor = req.headers.get('x-forwarded-for');
-    const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : '127.0.0.1';
+    const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : 'anonymous';
 
     try {
       const { success } = await ratelimit.limit(ip);
       if (!success) {
         return NextResponse.json(
-          { success: false, error: 'Rate limit exceeded. Maximum 5 requests per hour.' },
+          { success: false, error: 'Too Many Requests. Please try again later.' },
           { status: 429 }
         );
       }
@@ -70,7 +77,7 @@ export async function POST(req: NextRequest) {
       const allowed = checkInMemoryRateLimit(ip);
       if (!allowed) {
         return NextResponse.json(
-          { success: false, error: 'Rate limit exceeded. Maximum 5 requests per hour.' },
+          { success: false, error: 'Too Many Requests. Please try again later.' },
           { status: 429 }
         );
       }
@@ -97,6 +104,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // ─── File Size Validation (OOM Protection) ───────────────
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
+    if (contractFile && contractFile.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { success: false, error: 'File exceeds 5MB limit.' },
+        { status: 400 }
+      );
+    }
+
     let parsedContractText = fallbackContractText.trim();
 
     // If a PDF file was uploaded, extract its text using pdf-parse
@@ -105,6 +121,14 @@ export async function POST(req: NextRequest) {
       try {
         const arrayBuffer = await contractFile.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
+
+        // Check buffer size before passing to pdf-parse
+        if (buffer.length > MAX_FILE_SIZE) {
+          return NextResponse.json(
+            { success: false, error: 'File exceeds 5MB limit.' },
+            { status: 400 }
+          );
+        }
 
         // Dynamically require pdf-parse avoiding debug sample reads in Next.js
         let pdfParse;
@@ -174,9 +198,10 @@ export async function POST(req: NextRequest) {
     }
 
     // ─── PII Sanitization ───────────────────────────────────
-    // Redact SSNs and Credit Card numbers from extracted text and communication history
+    // Redact Credit Cards, SSNs, and standard email formats from extracted text and communication history
     const sanitizedContract = sanitizePII(sanitizedContractText);
     const sanitizedLogs = sanitizePII(sanitizedComms);
+    const sanitizedDispute = sanitizePII(disputeDescription);
 
     // ─── Formal System Prompt ──────────────────────────────
     const systemPrompt = `You are Nyaya AI, an administrative dispute formatting assistant. Do not refer to yourself as an attorney, lawyer, or legal counsel. Your mission is to help merchants format evidence against chargebacks.
@@ -198,7 +223,7 @@ Structure the rebuttal into five sections:
 ========================================
 1. DISPUTE CLAIM & TRANSACTION METADATA
 ========================================
-${disputeDescription}
+${sanitizedDispute}
 
 ========================================
 2. EXTRACTED CONTRACT / STATEMENT OF WORK (SOW)

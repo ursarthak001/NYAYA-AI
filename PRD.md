@@ -106,6 +106,12 @@ The Nyaya user workflow is streamlined for maximum urgency and zero friction:
   3. **Section III: Evidentiary Timeline & Written Client Approvals**
   4. **Section IV: Point-by-Point Refutation of Buyer Claims**
   5. **Section V: Formal Demand for Immediate Dispute Dismissal & Fund Release**
+- **FR-2.6 Comprehensive Security & Rate Limiting Engine:**
+  - *5MB File Size OOM Protection:* Direct buffer size verification before PDF parsing; throws HTTP 400 (`"File exceeds 5MB limit."`) on oversized payloads.
+  - *Sliding Window Rate Limiter:* Enforces 5 requests per hour per IP via `@upstash/ratelimit` and `@upstash/redis` (falling back to `'anonymous'`). Returns HTTP 429 when quota is exceeded.
+  - *In-Memory PII Regex Sanitizer:* Scrubs Credit Cards (13-16 digits), Social Security Numbers (`XXX-XX-XXXX`), and standard email addresses into `[REDACTED_PII]` prior to LLM prompt construction.
+  - *Scanned PDF Protection:* Rejects image-only PDFs lacking extractable text (<50 characters) with HTTP 400.
+  - *Clickwrap Legal Compliance:* Mandatory frontend consent checkbox linking to `/terms`, enforcing that the tool is an administrative formatting utility and not a law firm.
 
 ### 5.3 Evidentiary Presentation & Export
 - **FR-3.1 Live Markdown Presentation:** Styled output container with typography tailored for high legibility, clause highlighting, and visual hierarchy.

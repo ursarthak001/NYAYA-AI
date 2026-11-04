@@ -29,3 +29,5 @@ node_modules/
 *.tsbuildinfo
 .vercel/
 
+*.zip
+WelcomeScreen/
