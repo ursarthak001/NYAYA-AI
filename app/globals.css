@@ -10,28 +10,28 @@
 
 :root {
   --font: 'Inter', system-ui, -apple-system, sans-serif;
-  --bg: #07090f;
-  --bg1: #0d1117;
-  --bg2: #161b27;
-  --bg3: #1e2535;
-  --border: rgba(255,255,255,0.07);
-  --border-hover: rgba(255,255,255,0.13);
-  --text: #e8edf5;
-  --text-2: #8b95a8;
-  --text-3: #4b5568;
-  --blue: #3b7eff;
-  --blue-dim: rgba(59,126,255,0.12);
-  --blue-glow: rgba(59,126,255,0.25);
-  --green: #22c55e;
-  --amber: #f59e0b;
-  --red: #ef4444;
+  --bg: #f6f6f4;
+  --bg1: #ffffff;
+  --bg2: #f4f4f5;
+  --bg3: #e5e5e5;
+  --border: #e5e5e5;
+  --border-hover: #a3a3a3;
+  --text: #0a0a0a;
+  --text-2: #525252;
+  --text-3: #737373;
+  --blue: #0a0a0a;
+  --blue-dim: rgba(0,0,0,0.04);
+  --blue-glow: rgba(0,0,0,0.08);
+  --green: #16a34a;
+  --amber: #d97706;
+  --red: #dc2626;
   --radius: 12px;
   --radius-sm: 8px;
 }
 
 html {
-  background: var(--bg);
-  color: var(--text);
+  background: #f6f6f4;
+  color: #0a0a0a;
   font-family: var(--font);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -41,15 +41,27 @@ html {
 
 body {
   min-height: 100vh;
-  background: var(--bg);
-  color: var(--text);
+  background: #f6f6f4;
+  color: #0a0a0a;
   font-family: var(--font);
 }
 
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #1e2535; border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: #2d3748; }
+::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
+
+/* ─── Ultra-Minimalist Technical Patterns ─────────────────── */
+.bg-technical-dots {
+  background-image: radial-gradient(#d4d4d4 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.bg-technical-grid {
+  background-image: 
+    linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
 
 /* ─── Glassmorphism & Modern Fintech Dashboard Accents ─── */
 .glass-card {
@@ -74,14 +86,7 @@ body {
 
 /* ─── Noise texture overlay ───────────────────────── */
 body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.025;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 256px 256px;
+  display: none;
 }
 
 /* ─── Gradient orbs ─────────────────────────────────── */
@@ -791,7 +796,7 @@ body::before {
   display: inline-block;
   width: 3px;
   height: 14px;
-  background: #3b7eff;
+  background: #0a0a0a;
   border-radius: 2px;
   flex-shrink: 0;
 }
@@ -831,13 +836,13 @@ body::before {
 }
 
 .rebuttal-body blockquote {
-  border-left: 2px solid #3b7eff;
+  border-left: 2px solid #0a0a0a;
   padding: 10px 16px;
-  background: rgba(59,126,255,0.05);
+  background: #f4f4f5;
   border-radius: 0 6px 6px 0;
   margin: 12px 0;
   font-style: italic;
-  color: var(--text-2);
+  color: var(--text);
   font-size: 13px;
 }
 
@@ -1047,53 +1052,53 @@ body::before {
 
 /* ─── Evidence Anchor Map Table (UI) ───────────────── */
 .table-container {
-  margin: 20px 0;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--bg1);
+  margin: 16px 0;
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  background: #ffffff;
   overflow-x: auto;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  box-shadow: none;
 }
 .rebuttal-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 12.5px;
-  line-height: 1.6;
+  font-size: 12px;
+  line-height: 1.5;
 }
 .rebuttal-table th {
-  background: rgba(59,126,255,0.08);
-  color: #7badff;
+  background: #f4f4f5;
+  color: #171717;
   font-weight: 600;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e5e5;
   letter-spacing: 0.4px;
   text-transform: uppercase;
   font-size: 11px;
   white-space: nowrap;
 }
 .rebuttal-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  color: var(--text-2);
+  padding: 10px 14px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #525252;
   vertical-align: top;
 }
 .rebuttal-table tbody tr:nth-child(even) td {
-  background: rgba(255,255,255,0.015);
+  background: #fafafa;
 }
 .rebuttal-table tbody tr:hover td {
-  background: rgba(59,126,255,0.04);
+  background: #f4f4f5;
 }
 .rebuttal-table code {
-  background: var(--bg2);
-  color: #38bdf8;
+  background: #f4f4f5;
+  color: #0a0a0a;
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 11px;
   font-family: 'JetBrains Mono', monospace;
 }
 .rebuttal-table strong {
-  color: #fff;
+  color: #0a0a0a;
 }
 
 /* ─── Upgraded UI Extensions ───────────────────────── */

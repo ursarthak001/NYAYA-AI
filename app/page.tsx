@@ -15,10 +15,7 @@ import {
   Upload,
   FileText,
   FileCheck2,
-  MessageSquare,
-  ArrowRight,
   Loader2,
-  Sparkles,
   Download,
   Copy,
   Check,
@@ -27,7 +24,7 @@ import {
   FileCode,
   Trash2,
   CreditCard,
-  ChevronRight,
+  ArrowRight,
 } from 'lucide-react';
 import { GatewayType, DisputePreset, ApiHealthState, EvidentiaryMetrics } from '@/types';
 import { PRESETS, GATEWAYS } from '@/lib/constants';
@@ -71,7 +68,6 @@ export default function Page() {
       .catch(() => setApiHealth({ status: 'offline' }));
   }, []);
 
-  // Trigger floating toast notification
   const showToast = useCallback((msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
@@ -150,8 +146,8 @@ export default function Page() {
       setError('Only .pdf files are accepted.');
       return;
     }
-    if (f.size > 10 * 1024 * 1024) {
-      setError('File must be under 10 MB.');
+    if (f.size > 5 * 1024 * 1024) {
+      setError('File exceeds 5MB limit.');
       return;
     }
     setContractFile(f);
@@ -232,7 +228,7 @@ export default function Page() {
       }
 
       setRebuttal(data.rebuttal);
-      showToast('Rebuttal dossier compiled successfully!');
+      showToast('Rebuttal dossier compiled successfully.');
       setTimeout(() => {
         outputPaneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 150);
@@ -264,7 +260,7 @@ export default function Page() {
         })
         .from(el)
         .save();
-      showToast('PDF downloaded successfully');
+      showToast('PDF downloaded successfully.');
     } catch (err: any) {
       alert('PDF export failed: ' + (err.message || 'Unknown error'));
     } finally {
@@ -283,83 +279,66 @@ export default function Page() {
   const isLive = apiHealth?.status === 'active';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500/30 selection:text-emerald-200 relative overflow-x-hidden">
-      {/* Ambient Light Backdrops */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[480px] glow-header pointer-events-none -z-10" />
-      <div className="absolute top-48 left-10 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute top-96 right-10 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
-
+    <div className="min-h-screen bg-[#f6f6f4] text-neutral-900 font-sans antialiased selection:bg-black selection:text-white relative bg-technical-dots">
       {/* Floating Toast Notification */}
       {toast && (
-        <div className="fixed top-20 right-6 z-50 flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-900/90 border border-emerald-500/30 text-emerald-300 text-xs shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-2">
-          <CheckCircle2 size={16} className="text-emerald-400" />
-          <span className="font-medium">{toast}</span>
+        <div className="fixed top-16 right-6 z-50 flex items-center space-x-2 px-4 py-2 rounded-full bg-black text-white text-xs shadow-none border border-neutral-800 animate-in fade-in slide-in-from-top-2">
+          <CheckCircle2 size={14} className="text-emerald-400" />
+          <span className="font-mono">{toast}</span>
         </div>
       )}
 
-      {/* ── Top Header / App Navigation ── */}
-      <header className="w-full border-b border-white/5 bg-slate-950/70 backdrop-blur-xl sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          {/* Brand & Indian Jurisprudence Tag */}
+      {/* ── Top Header Bar (Ultra-Minimalist & Flat) ── */}
+      <header className="w-full border-b border-neutral-200 bg-white/95 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+          {/* Brand & Technical Jurisprudence Tag */}
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-400 p-[1px] flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <div className="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
-                <Scale className="w-5 h-5 text-emerald-400" strokeWidth={1.8} />
-              </div>
+            <div className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center">
+              <Scale className="w-3.5 h-3.5" />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-bold text-lg tracking-tight text-white">Nyaya</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium">
-                  न्याय
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
-                AI Dispute Defense Engine
-              </p>
+            <div className="flex items-center space-x-2">
+              <span className="font-mono font-bold text-sm tracking-tight text-black uppercase">
+                NYAYA
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-neutral-200 bg-neutral-100 text-neutral-700">
+                न्याय · ENGINE
+              </span>
             </div>
           </div>
 
-          {/* Center Status / Session Pill */}
-          <div className="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-full glass-card text-xs">
-            <span className="relative flex h-2 w-2">
-              <span
-                className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
-                  isLive ? 'bg-emerald-400' : 'bg-amber-400'
-                } opacity-75`}
-              />
-              <span
-                className={`relative inline-flex rounded-full h-2 w-2 ${
-                  isLive ? 'bg-emerald-500' : 'bg-amber-500'
-                }`}
-              />
-            </span>
-            <span className="text-slate-300 font-mono text-[11px]">
+          {/* Center Technical Pill */}
+          <div className="hidden md:flex items-center space-x-2 px-3 py-1 rounded-full border border-neutral-200 bg-neutral-50 text-xs font-mono">
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                isLive ? 'bg-black animate-pulse' : 'bg-neutral-400'
+              }`}
+            />
+            <span className="text-neutral-700 text-[11px]">
               {isLive
-                ? `BharatCode Live · ${apiHealth?.keyPreview}`
-                : 'BharatCode · Sovereign Inference'}
+                ? `BHARATCODE LIVE · ${apiHealth?.keyPreview || 'bc_live...6dD0'}`
+                : 'BHARATCODE · SOVEREIGN FALLBACK'}
             </span>
-            <span className="text-slate-600">|</span>
-            <span className="text-emerald-400 font-medium">Sub-20s qwen-3.8-27b</span>
+            <span className="text-neutral-300">|</span>
+            <span className="text-neutral-900 font-medium text-[11px]">qwen-3.8-27b</span>
           </div>
 
           {/* Right Header Actions */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
             <button
               onClick={() => selectPreset(PRESETS[0])}
               type="button"
-              className="flex items-center space-x-1.5 text-xs text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-lg transition font-medium cursor-pointer"
+              className="rounded-full border border-neutral-200 bg-white hover:bg-neutral-50 hover:border-black px-3.5 py-1 text-xs font-mono font-medium text-black transition flex items-center space-x-1.5 cursor-pointer"
             >
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span>Quick Demo</span>
+              <Zap className="w-3 h-3 text-black" />
+              <span>DEMO_PRESET</span>
             </button>
             <button
               onClick={clearAll}
               title="Reset Workbench"
               type="button"
-              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/5 transition border border-transparent hover:border-white/10 cursor-pointer"
+              className="rounded-full border border-neutral-200 bg-white hover:bg-neutral-50 hover:border-black p-1.5 text-neutral-600 hover:text-black transition cursor-pointer"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -367,50 +346,52 @@ export default function Page() {
 
       {/* ── Main Content Container ── */}
       <main className="max-w-7xl mx-auto px-6 py-10">
-        {/* Hackathon / Protocol Banner */}
+        {/* Protocol Banner */}
         <div className="flex items-center justify-center mb-6">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium">
-            <Shield className="w-3.5 h-3.5 text-indigo-400" />
-            <span>BHARATCODE BUILD LEAGUE 2026 SOVEREIGN HACKATHON PROTOCOL</span>
+          <div className="rounded-full border border-neutral-200 bg-white px-3.5 py-1 text-[11px] font-mono text-neutral-600 uppercase tracking-wider inline-flex items-center space-x-2">
+            <Shield className="w-3.5 h-3.5 text-black" />
+            <span>BHARATCODE BUILD LEAGUE 2026 &middot; SOVEREIGN ARBITRATION PROTOCOL</span>
           </div>
         </div>
 
-        {/* Hero Headline */}
+        {/* Display Header (Structural / Pixelated Font Simulation) */}
         <div className="text-center max-w-4xl mx-auto mb-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-4 leading-tight">
-            Fight chargebacks with <br className="hidden sm:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-emerald-400">
-              contract evidence, not emotion.
-            </span>
+          <h1 className="font-mono text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-black leading-tight">
+            FIGHT CHARGEBACKS WITH <br />
+            <span className="bg-black text-white px-3 py-1 font-mono inline-block my-1 rounded-sm">
+              CONTRACT EVIDENCE
+            </span>{' '}
+            <br className="hidden sm:inline" />
+            NOT EMOTION.
           </h1>
-          <p className="text-slate-400 text-base md:text-lg max-w-2xl mx-auto font-normal leading-relaxed">
-            Upload your signed contract, paste communication logs, and generate an airtight,
+          <p className="text-neutral-500 text-sm md:text-base max-w-2xl mx-auto font-light leading-relaxed mt-4">
+            Upload your signed Statement of Work, paste communication history, and generate an airtight,
             bank-compliant dispute rebuttal dossier with an{' '}
-            <strong className="text-slate-200 font-semibold">Evidence Anchor Map</strong> in seconds.
+            <strong className="text-black font-medium">Evidence Anchor Map</strong> in seconds.
           </p>
 
-          {/* Badges row */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-6 text-xs text-slate-400">
-            <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg glass-card">
-              <Clock className="w-4 h-4 text-emerald-400" />
-              <span>Instant ~20s turnaround</span>
+          {/* Technical Pill Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-6 text-xs font-mono text-neutral-600">
+            <div className="rounded-full border border-neutral-200 bg-white px-3.5 py-1 flex items-center space-x-1.5">
+              <Clock className="w-3.5 h-3.5 text-black" />
+              <span>~20s Turnaround</span>
             </div>
-            <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg glass-card">
-              <Lock className="w-4 h-4 text-sky-400" />
-              <span>Zero database storage</span>
+            <div className="rounded-full border border-neutral-200 bg-white px-3.5 py-1 flex items-center space-x-1.5">
+              <Lock className="w-3.5 h-3.5 text-black" />
+              <span>Zero Database Retention</span>
             </div>
-            <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg glass-card">
-              <Shield className="w-4 h-4 text-indigo-400" />
-              <span>Visa · Mastercard · Stripe standards</span>
+            <div className="rounded-full border border-neutral-200 bg-white px-3.5 py-1 flex items-center space-x-1.5">
+              <Shield className="w-3.5 h-3.5 text-black" />
+              <span>Visa · Mastercard · Stripe Standards</span>
             </div>
           </div>
         </div>
 
         {/* Quick Scenario Presets */}
         <div className="mb-8">
-          <div className="flex items-center space-x-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-            <Zap className="w-4 h-4 text-amber-400" />
-            <span>Select a Real-World Dispute Scenario</span>
+          <div className="flex items-center space-x-2 text-[11px] font-mono uppercase tracking-wider text-neutral-500 mb-3">
+            <Zap className="w-3.5 h-3.5 text-black" />
+            <span>[ REAL-WORLD DISPUTE SCENARIOS &middot; SELECT ONE TO TEST ]</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {PRESETS.map((preset) => {
@@ -420,38 +401,23 @@ export default function Page() {
                   key={preset.id}
                   type="button"
                   onClick={() => selectPreset(preset)}
-                  className={`text-left p-3.5 rounded-xl glass-card transition group relative overflow-hidden cursor-pointer ${
+                  className={`text-left p-4 rounded-xl bg-white border transition cursor-pointer ${
                     isSelected
-                      ? 'border-indigo-500/50 bg-indigo-950/30'
-                      : 'hover:border-slate-500/40'
+                      ? 'border-black ring-1 ring-black bg-neutral-50/50'
+                      : 'border-neutral-200 hover:border-neutral-400'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span
-                      className={`text-xs font-bold transition ${
-                        isSelected ? 'text-indigo-200' : 'text-slate-200 group-hover:text-white'
-                      }`}
-                    >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-mono font-bold text-black uppercase">
                       {preset.title}
                     </span>
-                    <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                        preset.badge === 'High Win-Rate'
-                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                          : preset.badge === 'Critical Defense'
-                          ? 'bg-sky-500/10 text-sky-300 border-sky-500/20'
-                          : 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20'
-                      }`}
-                    >
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-neutral-200 bg-neutral-100 text-neutral-800">
                       {preset.badge}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 leading-snug line-clamp-2">
+                  <p className="text-xs text-neutral-500 leading-relaxed font-light">
                     {preset.desc}
                   </p>
-                  {isSelected && (
-                    <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-indigo-500 to-emerald-400" />
-                  )}
                 </button>
               );
             })}
@@ -460,15 +426,15 @@ export default function Page() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start justify-between text-rose-300 text-xs">
+          <div className="mb-6 p-4 rounded-xl bg-white border border-rose-300 flex items-start justify-between text-neutral-900 text-xs font-mono">
             <div className="flex items-start space-x-2.5">
-              <AlertCircle size={16} className="text-rose-400 flex-shrink-0 mt-0.5" />
+              <AlertCircle size={15} className="text-rose-600 flex-shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
             <button
               onClick={() => setError(null)}
               type="button"
-              className="text-rose-400 hover:text-rose-200 p-0.5"
+              className="text-neutral-400 hover:text-black p-0.5 cursor-pointer"
             >
               <X size={14} />
             </button>
@@ -486,13 +452,15 @@ export default function Page() {
               <input type="hidden" name="contractText" value={contractText} />
               <input type="hidden" name="gateway" value={activeGateway} />
 
-              {/* Gateway Bar */}
-              <div className="glass-card rounded-2xl p-4">
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
-                    Target Payment Gateway / Card Network
+              {/* Target Gateway Selector */}
+              <div className="bg-white border border-neutral-200 rounded-xl p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-neutral-900">
+                    TARGET PAYMENT GATEWAY / CARD NETWORK
                   </span>
-                  <span className="text-[10px] text-slate-400">Tailors arbitration format</span>
+                  <span className="text-[10px] font-mono text-neutral-400">
+                    Arbitration standard
+                  </span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {GATEWAYS.map((gw) => (
@@ -500,60 +468,57 @@ export default function Page() {
                       key={gw}
                       type="button"
                       onClick={() => setActiveGateway(gw)}
-                      className={`flex items-center justify-center space-x-1.5 py-2 px-2.5 rounded-lg text-xs font-medium transition cursor-pointer border ${
+                      className={`py-2 px-3 rounded-full text-xs font-mono font-medium transition cursor-pointer border text-center ${
                         activeGateway === gw
-                          ? 'bg-indigo-500/20 border-indigo-500/40 text-white shadow-sm shadow-indigo-500/20'
-                          : 'bg-white/5 border-white/5 text-slate-400 hover:text-slate-200 hover:bg-white/10'
+                          ? 'bg-black text-white border-black'
+                          : 'bg-white border-neutral-200 text-neutral-600 hover:border-neutral-400 hover:text-black'
                       }`}
                     >
-                      <CreditCard size={12} />
-                      <span className="truncate">{gw}</span>
+                      {gw}
                     </button>
                   ))}
                 </div>
               </div>
 
               {/* Step Card 1: Dispute Allegation & Reason Code */}
-              <div className="glass-card rounded-2xl p-6 transition-all hover:border-white/15">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-bold text-xs">
-                      1
-                    </span>
-                    <h2 className="text-base font-semibold text-white">
-                      1. Dispute Allegation &amp; Reason Code
+              <div className="bg-white border border-neutral-200 rounded-xl p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-mono font-bold text-black">[01]</span>
+                    <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-black">
+                      Dispute Allegation &amp; Reason Code
                     </h2>
                   </div>
-                  <span className="text-xs font-mono text-slate-400 bg-white/5 px-2.5 py-1 rounded-md border border-white/5">
-                    {activeGateway} / Visa CE 3.0
+                  <span className="text-[11px] font-mono text-neutral-500 bg-neutral-100 px-2.5 py-0.5 rounded-full border border-neutral-200">
+                    {activeGateway} &middot; VISA CE 3.0
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-400 mb-3">
+                <p className="text-xs text-neutral-500 leading-relaxed font-light">
                   Specify the gateway charge ID, disputed amount, card network reason code, and the claimant&apos;s initial dispute statement.
                 </p>
 
                 <div className="space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-medium text-slate-300 uppercase tracking-wider mb-1">
+                      <label className="block text-[11px] font-mono text-neutral-600 uppercase tracking-wider mb-1">
                         Charge ID / Case Ref
                       </label>
                       <input
                         type="text"
                         value={chargeId}
                         onChange={(e) => setChargeId(e.target.value)}
-                        className="w-full bg-slate-900/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition"
+                        className="w-full bg-white border border-neutral-200 rounded-lg px-3 py-2 text-xs font-mono text-black focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-medium text-slate-300 uppercase tracking-wider mb-1">
+                      <label className="block text-[11px] font-mono text-neutral-600 uppercase tracking-wider mb-1">
                         Reason Code
                       </label>
                       <select
                         value={reasonCode}
                         onChange={(e) => setReasonCode(e.target.value)}
-                        className="w-full bg-slate-900/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition"
+                        className="w-full bg-white border border-neutral-200 rounded-lg px-3 py-2 text-xs font-mono text-black focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition"
                       >
                         <option value="10.4: Other Fraud - Card Absent">10.4: Other Fraud - Card Absent</option>
                         <option value="4853: Goods/Services Not Provided / Defective">4853: Goods/Services Not Provided / Defective</option>
@@ -566,7 +531,7 @@ export default function Page() {
                   <div>
                     <label
                       htmlFor="disputeDescription"
-                      className="block text-[11px] font-medium text-slate-300 uppercase tracking-wider mb-1"
+                      className="block text-[11px] font-mono text-neutral-600 uppercase tracking-wider mb-1"
                     >
                       Customer Claim Narrative &amp; Allegation
                     </label>
@@ -576,22 +541,22 @@ export default function Page() {
                       rows={5}
                       value={disputeDescription}
                       onChange={(e) => setDisputeDescription(e.target.value)}
-                      className="w-full bg-slate-900/70 border border-white/10 rounded-xl px-4 py-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition leading-relaxed"
+                      className="w-full bg-white border border-neutral-200 rounded-lg p-3 text-xs font-sans text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition leading-relaxed"
                       placeholder="Paste dispute claim details e.g., 'Customer claims via Stripe dispute portal that deliverables were never transferred, arguing code in repository did not work and demanding full $3,200 refund on Visa card ending in 4242 under reason code 10.4 Fraud / Services Not Rendered...'"
                       required
                     />
                   </div>
 
-                  {/* Quick indicator tags */}
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <span className="text-[10px] text-slate-400">Detected Indicators:</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-mono">
+                  {/* Indicator Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[10px] font-mono text-neutral-400">INDICATORS:</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
                       #VISA_CE_3.0_ELIGIBLE
                     </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-300 border border-sky-500/20 font-mono">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
                       #REASON_10.4
                     </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-mono">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
                       #B2B_DIGITAL_IP
                     </span>
                   </div>
@@ -599,27 +564,25 @@ export default function Page() {
               </div>
 
               {/* Step Card 2: Contract / Statement of Work (SOW) */}
-              <div className="glass-card rounded-2xl p-6 transition-all hover:border-white/15">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-bold text-xs">
-                      2
-                    </span>
-                    <h2 className="text-base font-semibold text-white">
-                      2. Contract / Statement of Work (SOW)
+              <div className="bg-white border border-neutral-200 rounded-xl p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-mono font-bold text-black">[02]</span>
+                    <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-black">
+                      Contract / Statement of Work (SOW)
                     </h2>
                   </div>
-                  <span className="text-xs text-emerald-400 flex items-center space-x-1 font-medium">
-                    <CheckCircle2 size={13} />
-                    <span>Direct PDF OCR Parser</span>
+                  <span className="text-[11px] font-mono text-neutral-600 flex items-center space-x-1">
+                    <CheckCircle2 size={12} className="text-black" />
+                    <span>PDF Parser Active</span>
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-400 mb-3">
+                <p className="text-xs text-neutral-500 leading-relaxed font-light">
                   Upload the executed Master Services Agreement, Statement of Work (SOW), or digital sign-off document.
                 </p>
 
-                {/* Drag-and-Drop File Upload Zone */}
+                {/* Flat Drag-and-Drop File Upload Zone */}
                 <div
                   onDragOver={(e) => {
                     e.preventDefault();
@@ -633,14 +596,14 @@ export default function Page() {
                     handleFileChange(dropped);
                   }}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 group ${
+                  className={`border border-dashed rounded-xl p-6 text-center cursor-pointer transition ${
                     isDragging
-                      ? 'border-emerald-400 bg-emerald-500/10'
+                      ? 'border-black bg-neutral-100'
                       : contractFile
-                      ? 'border-emerald-500/40 bg-emerald-950/10'
+                      ? 'border-neutral-900 bg-neutral-50/70'
                       : contractText
-                      ? 'border-sky-500/40 bg-sky-950/10'
-                      : 'border-white/15 hover:border-emerald-400/50 bg-slate-900/40 hover:bg-slate-900/60'
+                      ? 'border-neutral-400 bg-neutral-50/40'
+                      : 'border-neutral-300 hover:border-black bg-white hover:bg-neutral-50/50'
                   }`}
                 >
                   <input
@@ -653,56 +616,53 @@ export default function Page() {
                     className="hidden"
                   />
 
-                  <div className="flex flex-col items-center justify-center space-y-2.5 pointer-events-none">
-                    <div className="w-12 h-12 rounded-xl bg-white/5 group-hover:bg-emerald-500/10 border border-white/10 group-hover:border-emerald-500/30 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 transition transform group-hover:scale-105">
+                  <div className="flex flex-col items-center justify-center space-y-2 pointer-events-none">
+                    <div className="w-9 h-9 rounded-full border border-neutral-200 bg-neutral-50 flex items-center justify-center text-black">
                       {contractFile ? (
-                        <FileCheck2 className="w-6 h-6 text-emerald-400" />
+                        <FileCheck2 className="w-4 h-4" />
                       ) : (
-                        <Upload className="w-6 h-6" />
+                        <Upload className="w-4 h-4" />
                       )}
                     </div>
 
                     <div>
-                      <p className="text-xs font-semibold text-slate-200 group-hover:text-white">
-                        <span className="text-emerald-400 underline underline-offset-2">
-                          Click to upload
-                        </span>{' '}
-                        or drag and drop signed contract
+                      <p className="text-xs font-mono font-medium text-black">
+                        <span className="underline underline-offset-2">Click to select PDF</span> or drag and drop file
                       </p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        Supports official PDF contracts up to 10MB (DocuSign, PandaDoc, Adobe Sign, or countersigned scans)
+                      <p className="text-[11px] text-neutral-500 font-light mt-0.5">
+                        Supports signed agreements up to 5MB (DocuSign, PandaDoc, Adobe Sign, or countersigned scans)
                       </p>
                     </div>
 
-                    {/* Attached File Pill Preview */}
+                    {/* Attached File Pill */}
                     {contractFile && (
-                      <div className="mt-2 inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs pointer-events-auto">
-                        <FileText size={14} className="text-emerald-400 flex-shrink-0" />
+                      <div className="mt-2 inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-neutral-300 bg-white text-xs font-mono text-black pointer-events-auto">
+                        <FileText size={13} className="text-black flex-shrink-0" />
                         <span className="font-medium text-[11px] max-w-xs truncate">
                           {contractFile.name} ({(contractFile.size / 1024).toFixed(1)} KB)
                         </span>
-                        <span className="text-emerald-400/60 font-mono text-[10px]">
-                          &middot; Verified Signature Anchor
+                        <span className="text-neutral-400 text-[10px]">
+                          &middot; Attached
                         </span>
                         <button
                           type="button"
                           onClick={removeFile}
-                          className="text-slate-400 hover:text-rose-400 transition p-0.5"
+                          className="text-neutral-400 hover:text-black transition p-0.5 cursor-pointer"
                           title="Remove file"
                         >
-                          <Trash2 size={13} />
+                          <Trash2 size={12} />
                         </button>
                       </div>
                     )}
 
-                    {/* Sample Contract Text Pill (if preset selected without file upload) */}
+                    {/* Preset SOW Pill */}
                     {!contractFile && contractText && (
-                      <div className="mt-2 inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-300 text-xs pointer-events-auto">
-                        <FileText size={14} className="text-sky-400 flex-shrink-0" />
+                      <div className="mt-2 inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-neutral-200 bg-neutral-100 text-xs font-mono text-neutral-800 pointer-events-auto">
+                        <FileText size={13} className="text-black flex-shrink-0" />
                         <span className="font-medium text-[11px]">
-                          Preset Contract SOW Loaded ({contractText.length} characters)
+                          Preset Contract SOW Loaded ({contractText.length} chars)
                         </span>
-                        <span className="text-sky-400/60 font-mono text-[10px]">
+                        <span className="text-neutral-500 text-[10px]">
                           &middot; Click to replace with your own PDF
                         </span>
                       </div>
@@ -710,36 +670,34 @@ export default function Page() {
                   </div>
                 </div>
 
-                {/* Clause Extraction Highlights */}
-                <div className="mt-3.5 grid grid-cols-2 gap-2 text-[11px]">
-                  <div className="p-2 rounded-lg bg-white/5 border border-white/5 text-slate-300 flex items-center space-x-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                {/* Clause Highlights */}
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                  <div className="p-2.5 rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-800 flex items-center space-x-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-black" />
                     <span>Section 4.2 Non-Refundable Milestone</span>
                   </div>
-                  <div className="p-2 rounded-lg bg-white/5 border border-white/5 text-slate-300 flex items-center space-x-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <div className="p-2.5 rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-800 flex items-center space-x-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-black" />
                     <span>Section 9.1 Deemed Acceptance (7-Day)</span>
                   </div>
                 </div>
               </div>
 
               {/* Step Card 3: Communication Audit Trail */}
-              <div className="glass-card rounded-2xl p-6 transition-all hover:border-white/15">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-bold text-xs">
-                      3
-                    </span>
-                    <h2 className="text-base font-semibold text-white">
-                      3. Communication Audit Trail
+              <div className="bg-white border border-neutral-200 rounded-xl p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-mono font-bold text-black">[03]</span>
+                    <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-black">
+                      Communication Audit Trail
                     </h2>
                   </div>
-                  <span className="text-xs font-mono text-slate-400 bg-white/5 px-2 py-0.5 rounded border border-white/5">
-                    WhatsApp &middot; Slack &middot; Email Logs
+                  <span className="text-[11px] font-mono text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-full border border-neutral-200">
+                    SLACK &middot; EMAIL &middot; WHATSAPP
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-400 mb-3">
+                <p className="text-xs text-neutral-500 leading-relaxed font-light">
                   Paste unedited, timestamped communication history showing explicit client review, approval timestamps, and deliverable handoffs.
                 </p>
 
@@ -750,29 +708,29 @@ export default function Page() {
                     rows={6}
                     value={communicationHistory}
                     onChange={(e) => setCommunicationHistory(e.target.value)}
-                    className="w-full bg-slate-900/80 border border-white/10 rounded-xl px-4 py-3 text-xs text-emerald-300/90 font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition leading-relaxed shadow-inner"
+                    className="w-full bg-white border border-neutral-200 rounded-lg p-3 text-xs text-neutral-900 font-mono placeholder:text-neutral-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition leading-relaxed"
                     placeholder="[2024-10-12 14:22:04 UTC] Marcus Vance (Slack #client-staging): 'Staging deployment build verified. IP: 194.26.29.11 session confirmed and tested on our staging cluster.'&#10;[2024-10-12 16:45:10 UTC] Agency PM: 'Sending final deliverables SHA-256 bundle. Milestone 2 sign-off complete.'&#10;[2024-10-13 09:12:00 UTC] Marcus Vance: 'Looks great, thank you! Moving to production.'"
                   />
-                  <div className="absolute top-2.5 right-3 text-[10px] font-mono text-slate-400 bg-slate-950/80 px-2 py-0.5 rounded border border-white/10 pointer-events-none">
-                    Monospace Audit View
+                  <div className="absolute top-2.5 right-3 text-[10px] font-mono text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-full border border-neutral-200 pointer-events-none">
+                    MONOSPACE AUDIT VIEW
                   </div>
                 </div>
 
-                {/* Mandatory Clickwrap Agreement Checkbox */}
-                <div className="mt-5 pt-3 border-t border-white/5">
-                  <label className="flex items-start gap-3 p-3.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition cursor-pointer">
+                {/* Mandatory Clickwrap Agreement */}
+                <div className="border-t border-neutral-200 pt-4">
+                  <label className="flex items-start gap-3 p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100/50 transition cursor-pointer">
                     <input
                       type="checkbox"
                       checked={agreedToTerms}
                       onChange={(e) => setAgreedToTerms(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-white/20 bg-slate-900 text-emerald-500 focus:ring-emerald-500/50 cursor-pointer"
+                      className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-black focus:ring-black cursor-pointer"
                       required
                     />
-                    <span className="text-xs text-slate-300 leading-relaxed">
+                    <span className="text-xs text-neutral-700 leading-relaxed font-light">
                       I understand Nyaya AI is an administrative formatting tool, not a law firm, and this does not constitute legal advice. I agree to the{' '}
                       <Link
                         href="/terms"
-                        className="text-sky-400 underline hover:text-sky-300 font-medium"
+                        className="text-black underline font-medium hover:text-neutral-700"
                       >
                         Terms of Service and Privacy Policy
                       </Link>
@@ -781,54 +739,45 @@ export default function Page() {
                   </label>
                 </div>
 
-                {/* Primary Submit Button */}
-                <div className="mt-6 pt-2">
+                {/* Solid Black Pill Submit Button */}
+                <div className="pt-2">
                   <button
                     type="submit"
                     disabled={loading || !agreedToTerms}
-                    className="w-full relative group overflow-hidden rounded-xl p-[1px] focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    className="w-full rounded-full bg-black text-white hover:bg-neutral-800 disabled:bg-neutral-300 disabled:text-neutral-500 disabled:cursor-not-allowed transition font-mono font-medium py-3 px-6 text-xs uppercase tracking-wider flex items-center justify-center space-x-2 cursor-pointer shadow-none"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-400 to-indigo-500 rounded-xl transition-all duration-300 opacity-90 group-hover:opacity-100" />
-                    <div className="relative bg-slate-950/80 hover:bg-slate-950/60 rounded-[11px] px-6 py-3.5 transition flex items-center justify-center space-x-3 backdrop-blur-sm">
-                      {loading ? (
-                        <>
-                          <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
-                          <span className="font-bold text-sm text-white tracking-wide">
-                            Synthesizing Rebuttal Dossier…
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-5 h-5 text-emerald-400 group-hover:rotate-12 transition-transform duration-300" />
-                          <span className="font-bold text-sm text-white tracking-wide">
-                            Synthesize &amp; Compile Rebuttal Dossier
-                          </span>
-                          <span className="text-xs font-mono text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">
-                            Sovereign qwen-3.8-27b
-                          </span>
-                        </>
-                      )}
-                    </div>
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>SYNTHESIZING REBUTTAL DOSSIER…</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>SYNTHESIZE &amp; COMPILE REBUTTAL DOSSIER</span>
+                        <span className="opacity-60">&middot; qwen-3.8-27b</span>
+                        <ArrowRight size={13} />
+                      </>
+                    )}
                   </button>
 
                   {/* Loading Progress State */}
                   {loading && (
-                    <div className="mt-3 p-3 rounded-xl bg-white/5 border border-white/5 space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-emerald-400 flex items-center space-x-1.5 font-medium">
+                    <div className="mt-3 p-3 rounded-lg border border-neutral-200 bg-neutral-50 space-y-2">
+                      <div className="flex items-center justify-between text-xs font-mono">
+                        <span className="text-black flex items-center space-x-1.5 font-medium">
                           <Loader2 size={12} className="animate-spin" />
                           <span>{phase}</span>
                         </span>
-                        <span className="text-slate-500 font-mono text-[11px]">BharatCode Live</span>
+                        <span className="text-neutral-500 text-[11px]">BharatCode Sovereign</span>
                       </div>
-                      <div className="w-full bg-slate-900 rounded-full h-1 overflow-hidden">
-                        <div className="bg-gradient-to-r from-emerald-500 to-indigo-500 h-1 rounded-full animate-pulse w-full" />
+                      <div className="w-full bg-neutral-200 rounded-full h-1 overflow-hidden">
+                        <div className="bg-black h-1 rounded-full animate-pulse w-full" />
                       </div>
                     </div>
                   )}
 
                   {/* Muted Privacy Disclaimer */}
-                  <p className="text-center text-[11px] text-slate-500 mt-2.5">
+                  <p className="text-center text-[11px] text-neutral-500 mt-3 font-light leading-relaxed">
                     Files are processed entirely in-memory and never saved to our databases. However, extracted text is securely transmitted to the BharatCode API for AI processing. Do not upload files containing highly sensitive PII (Social Security Numbers, Credit Cards).
                   </p>
                 </div>
@@ -841,289 +790,220 @@ export default function Page() {
              ══════════════════════════════════════════════════════════ */}
           <section className="lg:col-span-5 space-y-6" ref={outputPaneRef}>
             {!rebuttal ? (
-              /* Case 1: Rebuttal is EMPTY -> Show Evidentiary Readiness & Informational Cards */
+              /* Case 1: Rebuttal is EMPTY -> Flat, Minimalist Info Cards */
               <>
-                {/* Top Card: Evidentiary Readiness */}
-                <div className="glass-card glass-glow-emerald rounded-2xl p-6 border-emerald-500/20">
-                  <div className="flex items-start justify-between mb-4">
+                {/* Evidentiary Readiness Card */}
+                <div className="bg-white border border-neutral-200 rounded-xl p-6 space-y-4">
+                  <div className="flex items-start justify-between border-b border-neutral-100 pb-3">
                     <div>
-                      <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold">
-                        Real-Time Evaluation
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-500">
+                        EVALUATION &middot; METRICS
                       </span>
-                      <h3 className="text-lg font-bold text-white mt-0.5">Evidentiary Readiness</h3>
-                      <p className="text-xs text-slate-400 mt-0.5">
+                      <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-black mt-0.5">
+                        Evidentiary Readiness
+                      </h3>
+                      <p className="text-xs text-neutral-500 font-light mt-0.5">
                         Mathematical strength against bank arbitration guidelines
                       </p>
                     </div>
 
-                    {/* Neon Score Badge */}
                     <div className="flex flex-col items-end">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-sm shadow-emerald-500/30 font-mono tracking-tight animate-pulse">
+                      <span className="rounded-full bg-black text-white px-3 py-1 text-xs font-mono font-bold">
                         {evidenceMetrics.score}% Score
                       </span>
-                      <span className="text-[10px] text-slate-400 mt-1 font-mono">
+                      <span className="text-[10px] font-mono text-neutral-400 mt-1">
                         {evidenceMetrics.grade}
                       </span>
                     </div>
                   </div>
 
-                  {/* Three Thin Progress Bars */}
-                  <div className="space-y-4 pt-2">
-                    {/* Bar 1: Contract Scope Terms */}
+                  {/* Three Thin Flat Progress Bars */}
+                  <div className="space-y-4 pt-1">
                     <div>
-                      <div className="flex items-center justify-between text-xs mb-1.5">
-                        <span className="text-slate-300 font-medium">Contract Scope Terms</span>
-                        <span className="font-mono text-slate-400 text-[11px]">
-                          {evidenceMetrics.coverage}%
-                        </span>
+                      <div className="flex items-center justify-between text-xs font-mono mb-1.5">
+                        <span className="text-neutral-800">Contract Scope Terms</span>
+                        <span className="text-neutral-500">{evidenceMetrics.coverage}%</span>
                       </div>
-                      <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden border border-white/5">
+                      <div className="w-full bg-neutral-100 rounded-full h-1 overflow-hidden">
                         <div
-                          className="bg-gradient-to-r from-emerald-500 to-teal-400 h-1.5 rounded-full transition-all duration-500"
+                          className="bg-black h-1 rounded-full transition-all duration-500"
                           style={{ width: `${evidenceMetrics.coverage}%` }}
                         />
                       </div>
-                      <div className="flex justify-between items-center text-[10px] text-slate-500 mt-1">
-                        <span>
-                          {contractFile
-                            ? 'Executed PDF Attached'
-                            : contractText
-                            ? 'Clause 4.2 Parsed'
-                            : 'No SOW Attached'}
-                        </span>
-                        <span className="text-emerald-400/80">
-                          {contractFile || contractText
-                            ? 'Verified Milestone Anchor'
-                            : 'Pending Contract Upload'}
-                        </span>
+                      <div className="flex justify-between items-center text-[10px] font-mono text-neutral-400 mt-1">
+                        <span>{contractFile ? 'Executed PDF Attached' : contractText ? 'Clause 4.2 Parsed' : 'No SOW Attached'}</span>
+                        <span className="text-neutral-700">{contractFile || contractText ? 'Verified Milestone Anchor' : 'Pending Contract Upload'}</span>
                       </div>
                     </div>
 
-                    {/* Bar 2: Timestamp Audit Integrity */}
                     <div>
-                      <div className="flex items-center justify-between text-xs mb-1.5">
-                        <span className="text-slate-300 font-medium">Timestamp Audit Integrity</span>
-                        <span className="font-mono text-slate-400 text-[11px]">
-                          {evidenceMetrics.timeline}%
-                        </span>
+                      <div className="flex items-center justify-between text-xs font-mono mb-1.5">
+                        <span className="text-neutral-800">Timestamp Audit Integrity</span>
+                        <span className="text-neutral-500">{evidenceMetrics.timeline}%</span>
                       </div>
-                      <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden border border-white/5">
+                      <div className="w-full bg-neutral-100 rounded-full h-1 overflow-hidden">
                         <div
-                          className="bg-gradient-to-r from-emerald-500 to-teal-400 h-1.5 rounded-full transition-all duration-500"
+                          className="bg-black h-1 rounded-full transition-all duration-500"
                           style={{ width: `${evidenceMetrics.timeline}%` }}
                         />
                       </div>
-                      <div className="flex justify-between items-center text-[10px] text-slate-500 mt-1">
-                        <span>
-                          {communicationHistory
-                            ? 'Slack & WhatsApp Correlated'
-                            : 'Awaiting Communication Logs'}
-                        </span>
-                        <span
-                          className={
-                            communicationHistory ? 'text-emerald-400/80' : 'text-amber-400/80'
-                          }
-                        >
-                          {communicationHistory
-                            ? 'Timestamps Verified'
-                            : 'Missing Server Auth Logs'}
-                        </span>
+                      <div className="flex justify-between items-center text-[10px] font-mono text-neutral-400 mt-1">
+                        <span>{communicationHistory ? 'Slack & WhatsApp Correlated' : 'Awaiting Communication Logs'}</span>
+                        <span className="text-neutral-700">{communicationHistory ? 'Timestamps Verified' : 'Missing Server Auth Logs'}</span>
                       </div>
                     </div>
 
-                    {/* Bar 3: Gateway Compliance */}
                     <div>
-                      <div className="flex items-center justify-between text-xs mb-1.5">
-                        <span className="text-slate-300 font-medium">Gateway Compliance</span>
-                        <span className="font-mono text-slate-400 text-[11px]">
-                          {evidenceMetrics.compliance}%
-                        </span>
+                      <div className="flex items-center justify-between text-xs font-mono mb-1.5">
+                        <span className="text-neutral-800">Gateway Compliance</span>
+                        <span className="text-neutral-500">{evidenceMetrics.compliance}%</span>
                       </div>
-                      <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden border border-white/5">
+                      <div className="w-full bg-neutral-100 rounded-full h-1 overflow-hidden">
                         <div
-                          className="bg-gradient-to-r from-emerald-500 to-teal-400 h-1.5 rounded-full transition-all duration-500"
+                          className="bg-black h-1 rounded-full transition-all duration-500"
                           style={{ width: `${evidenceMetrics.compliance}%` }}
                         />
                       </div>
-                      <div className="flex justify-between items-center text-[10px] text-slate-500 mt-1">
+                      <div className="flex justify-between items-center text-[10px] font-mono text-neutral-400 mt-1">
                         <span>{activeGateway} Rules Match</span>
-                        <span className="text-slate-400">Needs IP Fingerprint Bind</span>
+                        <span className="text-neutral-700">Visa CE 3.0 Standard</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-5 pt-4 border-t border-white/5 flex items-center justify-between text-xs">
-                    <span className="text-slate-400">Win Rate Projection:</span>
-                    <div className="flex items-center space-x-1.5 font-bold text-slate-200">
-                      <span className="text-emerald-400 font-mono">88.4%</span>
-                      <span className="text-[11px] text-slate-400 font-normal">
-                        if full logs submitted
-                      </span>
-                    </div>
+                  <div className="border-t border-neutral-100 pt-3 flex items-center justify-between text-xs font-mono">
+                    <span className="text-neutral-500">Win Rate Projection:</span>
+                    <span className="font-bold text-black">88.4% with full audit trail</span>
                   </div>
                 </div>
 
-                {/* Stack of Smaller Informational Glass Cards */}
+                {/* Flat Informational Cards */}
                 <div className="space-y-4">
                   {/* Card 1: Evidence Anchor Map */}
-                  <div className="glass-card rounded-2xl p-5 hover:border-white/15 transition-all">
-                    <div className="flex items-center space-x-3 mb-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
-                        <Shield className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-white">Evidence Anchor Map</h4>
-                        <p className="text-[11px] text-slate-400">
-                          Direct Clause-to-Dispute Attribution
+                  <div className="bg-white border border-neutral-200 rounded-xl p-5 space-y-3">
+                    <div className="flex items-center space-x-2 border-b border-neutral-100 pb-2.5">
+                      <Shield className="w-3.5 h-3.5 text-black" />
+                      <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-black">
+                        Evidence Anchor Map
+                      </h4>
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      <div className="p-3 rounded-lg border border-neutral-100 bg-neutral-50/50 space-y-1">
+                        <div className="flex items-center space-x-1.5 font-mono text-[11px] font-semibold text-black">
+                          <span>&check;</span>
+                          <span>Contract Clause 9.1 &rarr; Acceptance Conferred</span>
+                        </div>
+                        <p className="text-[11px] text-neutral-500 font-light pl-3.5">
+                          Deemed approved automatically 72h after staging link transmission.
                         </p>
                       </div>
-                    </div>
-
-                    <div className="space-y-2 mt-3 text-xs">
-                      <div className="p-2.5 rounded-lg bg-white/5 border border-white/5 flex items-start space-x-2.5">
-                        <span className="mt-0.5 text-emerald-400 font-bold">&check;</span>
-                        <div>
-                          <span className="text-slate-200 font-medium text-[11px] block">
-                            Contract Clause 9.1 &rarr; Acceptance Conferred
-                          </span>
-                          <p className="text-[10px] text-slate-400 mt-0.5">
-                            Deemed approved automatically 72h after staging link transmission.
-                          </p>
+                      <div className="p-3 rounded-lg border border-neutral-100 bg-neutral-50/50 space-y-1">
+                        <div className="flex items-center space-x-1.5 font-mono text-[11px] font-semibold text-black">
+                          <span>&check;</span>
+                          <span>IP &amp; Telemetry Fingerprint Match</span>
                         </div>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-white/5 border border-white/5 flex items-start space-x-2.5">
-                        <span className="mt-0.5 text-emerald-400 font-bold">&check;</span>
-                        <div>
-                          <span className="text-slate-200 font-medium text-[11px] block">
-                            IP &amp; Telemetry Fingerprint Match
-                          </span>
-                          <p className="text-[10px] text-slate-400 mt-0.5">
-                            Cardholder logged in from <span className="font-mono text-slate-300">194.26.29.11</span> during live feature verification.
-                          </p>
-                        </div>
+                        <p className="text-[11px] text-neutral-500 font-light pl-3.5">
+                          Cardholder logged in from <span className="font-mono text-black font-medium">194.26.29.11</span> during feature verification.
+                        </p>
                       </div>
                     </div>
                   </div>
 
                   {/* Card 2: Timeline & Acceptance Cross-Check */}
-                  <div className="glass-card rounded-2xl p-5 hover:border-white/15 transition-all">
-                    <div className="flex items-center space-x-3 mb-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-                        <Clock className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-white">
-                          Timeline &amp; Acceptance Cross-Check
-                        </h4>
-                        <p className="text-[11px] text-slate-400">
-                          Cryptographic Time Audit vs Bank Dispute Date
-                        </p>
-                      </div>
+                  <div className="bg-white border border-neutral-200 rounded-xl p-5 space-y-3">
+                    <div className="flex items-center space-x-2 border-b border-neutral-100 pb-2.5">
+                      <Clock className="w-3.5 h-3.5 text-black" />
+                      <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-black">
+                        Timeline &amp; Acceptance Cross-Check
+                      </h4>
                     </div>
 
-                    {/* Mini visual timeline */}
-                    <div className="relative pl-5 border-l border-white/10 space-y-3.5 my-3 text-xs">
+                    <div className="relative pl-5 border-l border-neutral-200 space-y-3 my-2 text-xs font-mono">
                       <div className="relative">
-                        <div className="absolute -left-[25px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-4 ring-slate-950" />
-                        <div className="text-[11px] font-semibold text-slate-200">
-                          Contract Executed &amp; Initial Deposit
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-mono">
-                          Oct 02, 2024 &middot; Verified DocuSign Hash
-                        </div>
+                        <div className="absolute -left-[25px] top-1 w-2.5 h-2.5 rounded-full bg-black" />
+                        <div className="text-[11px] font-bold text-black">Contract Executed &amp; Deposit</div>
+                        <div className="text-[10px] text-neutral-500">Oct 02 &middot; DocuSign Hash Verified</div>
                       </div>
                       <div className="relative">
-                        <div className="absolute -left-[25px] top-1 w-2.5 h-2.5 rounded-full bg-indigo-400 ring-4 ring-slate-950" />
-                        <div className="text-[11px] font-semibold text-slate-200">
-                          Deliverables Handed Off via GitHub
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-mono">
-                          Oct 12, 2024 &middot; SHA-256 Commit verified
-                        </div>
+                        <div className="absolute -left-[25px] top-1 w-2.5 h-2.5 rounded-full bg-black" />
+                        <div className="text-[11px] font-bold text-black">Deliverables Handed Off</div>
+                        <div className="text-[10px] text-neutral-500">Oct 12 &middot; SHA-256 Commit Verified</div>
                       </div>
                       <div className="relative">
-                        <div className="absolute -left-[25px] top-1 w-2.5 h-2.5 rounded-full bg-rose-400 ring-4 ring-slate-950" />
-                        <div className="text-[11px] font-semibold text-rose-300">
-                          Dispute Filed (Reason 10.4)
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-mono">
-                          Oct 14, 2024 &middot; Rebuttal Window: 46h Remaining
-                        </div>
+                        <div className="absolute -left-[25px] top-1 w-2.5 h-2.5 rounded-full border-2 border-black bg-white" />
+                        <div className="text-[11px] font-bold text-black">Dispute Filed (Reason 10.4)</div>
+                        <div className="text-[10px] text-neutral-500">Oct 14 &middot; Rebuttal Window Open</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Card 3: Bank & Gateway Evidentiary Packet */}
-                  <div className="glass-card rounded-2xl p-5 hover:border-white/15 transition-all">
-                    <div className="flex items-center space-x-3 mb-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                        <FileCheck2 className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-white">
-                          Bank &amp; Gateway Evidentiary Packet
-                        </h4>
-                        <p className="text-[11px] text-slate-400">Compiled Target Protocols</p>
-                      </div>
+                  <div className="bg-white border border-neutral-200 rounded-xl p-5 space-y-3">
+                    <div className="flex items-center space-x-2 border-b border-neutral-100 pb-2.5">
+                      <FileCheck2 className="w-3.5 h-3.5 text-black" />
+                      <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-black">
+                        Bank &amp; Gateway Packet Status
+                      </h4>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-[11px] mt-3">
-                      <div className="p-2 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between">
-                        <span className="text-slate-300">Visa VROL API</span>
-                        <span className="text-[10px] text-emerald-400 font-mono font-medium">Ready</span>
+                    <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                      <div className="p-2.5 rounded-lg border border-neutral-200 bg-white flex items-center justify-between">
+                        <span className="text-neutral-700">Visa VROL API</span>
+                        <span className="font-bold text-black">READY</span>
                       </div>
-                      <div className="p-2 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between">
-                        <span className="text-slate-300">Mastercard MasterCom</span>
-                        <span className="text-[10px] text-emerald-400 font-mono font-medium">Ready</span>
+                      <div className="p-2.5 rounded-lg border border-neutral-200 bg-white flex items-center justify-between">
+                        <span className="text-neutral-700">MasterCom</span>
+                        <span className="font-bold text-black">READY</span>
                       </div>
-                      <div className="p-2 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between">
-                        <span className="text-slate-300">Stripe Dispute Webhook</span>
-                        <span className="text-[10px] text-emerald-400 font-mono font-medium">Active</span>
+                      <div className="p-2.5 rounded-lg border border-neutral-200 bg-white flex items-center justify-between">
+                        <span className="text-neutral-700">Stripe Webhook</span>
+                        <span className="font-bold text-black">ACTIVE</span>
                       </div>
-                      <div className="p-2 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between">
-                        <span className="text-slate-300">Audit Proof PDF</span>
-                        <span className="text-[10px] text-indigo-400 font-mono font-medium">5 Pages</span>
+                      <div className="p-2.5 rounded-lg border border-neutral-200 bg-white flex items-center justify-between">
+                        <span className="text-neutral-700">Audit Dossier</span>
+                        <span className="font-bold text-black">5 PAGES</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Sovereign AI Trust Badge */}
-                <div className="p-4 rounded-xl glass-card-subtle border border-emerald-500/20 text-center">
-                  <div className="flex items-center justify-center space-x-2 text-xs text-slate-300 mb-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400" />
-                    <span className="font-medium text-slate-200">
-                      Powered by BharatCode Sovereign AI
+                {/* Sovereign AI Trust Note */}
+                <div className="p-4 rounded-xl border border-neutral-200 bg-white text-center">
+                  <div className="flex items-center justify-center space-x-2 text-xs font-mono text-black mb-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-black" />
+                    <span className="font-bold uppercase tracking-wide">
+                      POWERED BY BHARATCODE SOVEREIGN AI
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 font-mono">
-                    Direct native fetch to <span className="text-emerald-300">qwen-3.8-27b</span>. Zero external SDK.
+                  <p className="text-[11px] text-neutral-500 font-mono">
+                    Direct native fetch to <span className="text-black font-semibold">qwen-3.8-27b</span>. Zero external SDKs.
                   </p>
                 </div>
               </>
             ) : (
-              /* Case 2: Rebuttal is NOT EMPTY -> Replace readiness cards with actual rebuttal in scrollable glass pane */
-              <div className="glass-card glass-glow-emerald rounded-2xl p-6 border-emerald-500/30 sticky top-20">
-                {/* Header of the Rebuttal Output Pane */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
+              /* Case 2: Rebuttal is NOT EMPTY -> Clean, Flat Output Container with Stark Black 'Export to PDF' Button */
+              <div className="bg-white border border-neutral-200 rounded-xl p-6 sticky top-20 space-y-4">
+                {/* Header of Rebuttal Output Pane */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-200 pb-4">
                   <div>
                     <div className="flex items-center space-x-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <h3 className="text-base font-bold text-white">Rebuttal Dossier Ready</h3>
+                      <span className="w-2 h-2 rounded-full bg-black animate-pulse" />
+                      <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-black">
+                        Rebuttal Dossier Compiled
+                      </h3>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Target: <span className="text-emerald-300 font-semibold">{activeGateway}</span> &middot; Visa Compelling Evidence 3.0 Standard
+                    <p className="text-xs text-neutral-500 font-mono mt-0.5">
+                      Target: <span className="text-black font-bold">{activeGateway}</span> &middot; Visa CE 3.0 Standard
                     </p>
                   </div>
 
-                  {/* Action Buttons: Export to PDF, Copy, Print */}
+                  {/* Actions Row with Stark Black Pill 'Export to PDF' Button as Requested */}
                   <div className="flex items-center space-x-2 flex-wrap">
-                    {/* Required Export to PDF Button at top of this pane */}
                     <button
                       type="button"
                       onClick={exportPDF}
                       disabled={pdfBusy}
-                      className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow-sm shadow-emerald-500/30 disabled:opacity-50 cursor-pointer"
+                      className="rounded-full bg-black text-white hover:bg-neutral-800 px-4 py-2 text-xs font-mono font-medium flex items-center space-x-1.5 transition cursor-pointer shadow-none disabled:opacity-50"
                       title="Download Certified PDF Dossier"
                     >
                       {pdfBusy ? (
@@ -1131,23 +1011,23 @@ export default function Page() {
                       ) : (
                         <Download size={13} />
                       )}
-                      <span>{pdfBusy ? 'Exporting…' : 'Export to PDF'}</span>
+                      <span>{pdfBusy ? 'EXPORTING…' : 'EXPORT TO PDF'}</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={copyRebuttalText}
-                      className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 text-xs font-medium transition cursor-pointer"
+                      className="rounded-full border border-neutral-200 bg-white hover:bg-neutral-50 px-3 py-2 text-xs font-mono font-medium text-black transition cursor-pointer flex items-center space-x-1"
                       title="Copy rebuttal text"
                     >
-                      {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                      <span>{copied ? 'Copied!' : 'Copy'}</span>
+                      {copied ? <Check size={13} className="text-black" /> : <Copy size={13} />}
+                      <span>{copied ? 'COPIED' : 'COPY'}</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => window.print()}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white transition cursor-pointer"
+                      className="rounded-full border border-neutral-200 bg-white hover:bg-neutral-50 p-2 text-neutral-600 hover:text-black transition cursor-pointer"
                       title="Print Dossier"
                     >
                       <Printer size={13} />
@@ -1156,76 +1036,73 @@ export default function Page() {
                     <button
                       type="button"
                       onClick={() => setRebuttal(null)}
-                      className="text-xs text-slate-400 hover:text-slate-200 px-2 py-1.5 rounded-lg hover:bg-white/5 transition cursor-pointer"
+                      className="rounded-full border border-neutral-200 bg-white hover:bg-neutral-50 px-3 py-2 text-xs font-mono text-neutral-600 hover:text-black transition cursor-pointer"
                       title="Return to Readiness View"
                     >
-                      View Readiness
+                      READINESS
                     </button>
                   </div>
                 </div>
 
                 {/* View Tabs */}
-                <div className="flex items-center space-x-2 mt-4 mb-3 border-b border-white/5 pb-2">
+                <div className="flex items-center space-x-2 border-b border-neutral-100 pb-2">
                   <button
                     type="button"
                     onClick={() => setActiveTab('dossier')}
-                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                    className={`rounded-full px-3 py-1 text-xs font-mono font-medium transition cursor-pointer ${
                       activeTab === 'dossier'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        : 'text-slate-400 hover:text-white bg-white/5'
+                        ? 'bg-black text-white'
+                        : 'bg-neutral-100 text-neutral-600 hover:text-black'
                     }`}
                   >
-                    <FileText size={12} />
-                    <span>Formal Dossier</span>
+                    FORMAL DOSSIER
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveTab('raw')}
-                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                    className={`rounded-full px-3 py-1 text-xs font-mono font-medium transition cursor-pointer ${
                       activeTab === 'raw'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        : 'text-slate-400 hover:text-white bg-white/5'
+                        ? 'bg-black text-white'
+                        : 'bg-neutral-100 text-neutral-600 hover:text-black'
                     }`}
                   >
-                    <FileCode size={12} />
-                    <span>Gateway Text</span>
+                    GATEWAY TEXT
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveTab('matrix')}
-                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                    className={`rounded-full px-3 py-1 text-xs font-mono font-medium transition cursor-pointer ${
                       activeTab === 'matrix'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        : 'text-slate-400 hover:text-white bg-white/5'
+                        ? 'bg-black text-white'
+                        : 'bg-neutral-100 text-neutral-600 hover:text-black'
                     }`}
                   >
-                    <Layers size={12} />
-                    <span>Defense Matrix</span>
+                    DEFENSE MATRIX
                   </button>
                 </div>
 
-                {/* Scrollable Glass Pane for the Rebuttal Output */}
-                <div className="max-h-[640px] overflow-y-auto pr-2 text-slate-200">
+                {/* Scrollable Rebuttal Output Pane */}
+                <div className="max-h-[640px] overflow-y-auto pr-2 text-neutral-900">
                   {activeTab === 'dossier' && (
-                    <div className="prose prose-invert prose-sm max-w-none">
+                    <div className="prose prose-neutral prose-sm max-w-none font-sans">
                       <RebuttalDocument text={rebuttal} />
                     </div>
                   )}
 
                   {activeTab === 'raw' && (
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between text-xs text-slate-400">
+                      <div className="flex items-center justify-between text-xs font-mono text-neutral-500">
                         <span>{rebuttal.length} characters &middot; Ready to paste into {activeGateway} dispute portal</span>
                         <button
                           type="button"
                           onClick={copyRebuttalText}
-                          className="text-xs text-emerald-400 hover:underline flex items-center space-x-1 cursor-pointer"
+                          className="text-xs text-black hover:underline flex items-center space-x-1 font-mono cursor-pointer"
                         >
                           <Copy size={11} />
-                          <span>Copy All</span>
+                          <span>COPY ALL</span>
                         </button>
                       </div>
-                      <pre className="p-4 rounded-xl bg-slate-900/90 border border-white/10 font-mono text-xs text-emerald-300/90 whitespace-pre-wrap leading-relaxed shadow-inner">
+                      <pre className="p-4 rounded-xl bg-neutral-50 border border-neutral-200 font-mono text-xs text-black whitespace-pre-wrap leading-relaxed">
                         {rebuttal}
                       </pre>
                     </div>
@@ -1270,15 +1147,16 @@ export default function Page() {
                   fontWeight: '800',
                   color: '#0f172a',
                   letterSpacing: '0.5px',
+                  fontFamily: 'monospace',
                 }}
               >
                 OFFICIAL DISPUTE REBUTTAL DOSSIER
               </div>
-              <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>
+              <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px', fontFamily: 'monospace' }}>
                 Nyaya AI — Payment Gateway Dispute Arbitration Packet ({activeGateway})
               </div>
             </div>
-            <div style={{ textAlign: 'right', fontSize: '9px', color: '#475569' }}>
+            <div style={{ textAlign: 'right', fontSize: '9px', color: '#475569', fontFamily: 'monospace' }}>
               <div>
                 <strong>Submission Date:</strong>{' '}
                 {new Date().toLocaleDateString('en-US', {
@@ -1307,6 +1185,7 @@ export default function Page() {
               fontSize: '8px',
               color: '#94a3b8',
               textAlign: 'center',
+              fontFamily: 'monospace',
             }}
           >
             Certified Merchant Evidentiary Rebuttal Packet · Prepared via Nyaya AI · Non-Law Firm Administrative Record
@@ -1314,25 +1193,23 @@ export default function Page() {
         </div>
       </div>
 
-      {/* ── Legal & Confidentiality Footer ── */}
-      <footer className="w-full border-t border-white/5 py-8 mt-16 text-center text-xs text-slate-500">
+      {/* ── Flat Minimalist Footer ── */}
+      <footer className="w-full border-t border-neutral-200 bg-white py-8 mt-16 text-center text-xs text-neutral-500 font-mono">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-2 text-slate-400">
-            <span className="font-semibold text-slate-300">Nyaya Dispute Defense Engine</span>
+          <div className="flex items-center space-x-2 text-neutral-600">
+            <span className="font-bold text-black uppercase">Nyaya AI</span>
             <span>&middot;</span>
-            <span>Cryptographically verified arbitration defense</span>
+            <span>Sovereign Dispute Defense Engine</span>
           </div>
-          <div className="flex items-center space-x-6 text-[11px] text-slate-400">
-            <span className="hover:text-slate-300 transition">Visa Core Rules 5.4.2</span>
-            <span className="hover:text-slate-300 transition">
-              Mastercard Chapter 8 Chargeback Standard
-            </span>
-            <span className="hover:text-slate-300 transition">PCI-DSS 4.0 Compliant</span>
+          <div className="flex items-center space-x-6 text-[11px] text-neutral-500">
+            <span>Visa Core Rules 5.4.2</span>
+            <span>Mastercard Chapter 8</span>
+            <span>PCI-DSS 4.0 Compliant</span>
             <Link
               href="/terms"
-              className="hover:text-slate-200 transition underline underline-offset-2"
+              className="text-black hover:underline underline-offset-2"
             >
-              Terms of Service &amp; Privacy Policy
+              Terms &amp; Privacy
             </Link>
           </div>
         </div>
