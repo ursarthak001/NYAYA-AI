@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Scale, Zap, RotateCcw } from 'lucide-react';
+import { Zap, RotateCcw } from 'lucide-react';
 import { ApiHealthState } from '@/types';
+import { Logo } from '@/components/Logo';
 
 interface NavbarProps {
   apiHealth: ApiHealthState | null;
@@ -17,8 +18,8 @@ export function Navbar({ apiHealth, onQuickDemo, onReset }: NavbarProps) {
     <nav className="navbar">
       <div className="navbar-inner">
         <div className="logo">
-          <div className="logo-icon">
-            <Scale size={18} color="#fff" strokeWidth={2.4} />
+          <div className="logo-icon flex items-center justify-center p-1 bg-black text-white rounded-lg">
+            <Logo size={18} className="text-white" />
           </div>
           <div>
             <div className="logo-wordmark">Nyaya</div>

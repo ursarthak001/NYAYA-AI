@@ -30,6 +30,7 @@ import { GatewayType, DisputePreset, ApiHealthState, EvidentiaryMetrics } from '
 import { PRESETS, GATEWAYS } from '@/lib/constants';
 import { RebuttalDocument } from '@/components/RebuttalDocument';
 import { DefenseMatrix } from '@/components/DefenseMatrix';
+import { Logo } from '@/components/Logo';
 
 export default function Page() {
   // ─── Functional State Hooks (Preserved as required) ───────────
@@ -292,9 +293,9 @@ export default function Page() {
       <header className="w-full border-b border-neutral-200 bg-white/95 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           {/* Brand & Technical Jurisprudence Tag */}
-          <div className="flex items-center space-x-3">
-            <div className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center">
-              <Scale className="w-3.5 h-3.5" />
+          <Link href="/" className="flex items-center space-x-3 hover:opacity-85 transition cursor-pointer">
+            <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center p-1.5 shadow-sm">
+              <Logo size={20} className="text-white" />
             </div>
             <div className="flex items-center space-x-2">
               <span className="font-mono font-bold text-sm tracking-tight text-black uppercase">
@@ -304,7 +305,7 @@ export default function Page() {
                 न्याय · ENGINE
               </span>
             </div>
-          </div>
+          </Link>
 
           {/* Center Technical Pill */}
           <div className="hidden md:flex items-center space-x-2 px-3 py-1 rounded-full border border-neutral-200 bg-neutral-50 text-xs font-mono">
