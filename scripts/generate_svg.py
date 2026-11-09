@@ -100,3 +100,4 @@ with open('public/pillar-logo.svg', 'w') as f:
         f.write(f'  <path d="{d}" />\n')
     f.write('</svg>\n')
 print('Successfully generated public/pillar-logo.svg!')
+

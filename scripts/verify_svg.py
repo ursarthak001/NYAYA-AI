@@ -30,3 +30,4 @@ diff = np.abs(orig_arr.astype(int) - drawn_arr.astype(int))
 print('Max pixel diff:', np.max(diff))
 print('Mean pixel diff:', np.mean(diff))
 print('Matching pixel percentage:', np.mean(np.all(diff < 20, axis=2)) * 100)
+
