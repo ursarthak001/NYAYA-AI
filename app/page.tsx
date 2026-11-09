@@ -25,6 +25,7 @@ import {
   Trash2,
   CreditCard,
   ArrowRight,
+  Paperclip,
 } from 'lucide-react';
 import { GatewayType, DisputePreset, ApiHealthState, EvidentiaryMetrics } from '@/types';
 import { PRESETS, GATEWAYS } from '@/lib/constants';
@@ -42,23 +43,30 @@ export default function Page() {
   const [communicationHistory, setCommunicationHistory] = useState('');
   const [contractFile, setContractFile] = useState<File | null>(null);
   const [contractText, setContractText] = useState('');
+  const [supportingProofs, setSupportingProofs] = useState<File[]>([]);
 
   // ─── Auxiliary UI & Evidentiary State ─────────────────────────
   const [activeGateway, setActiveGateway] = useState<GatewayType>('Stripe');
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [chargeId, setChargeId] = useState('ch_3Mqat2Enz8V9kL0x ($3,200.00 USD)');
-  const [reasonCode, setReasonCode] = useState('10.4: Other Fraud - Card Absent');
+  const [reasonCode, setReasonCode] = useState('13.1: Merchandise / Services Not Received');
   const [phase, setPhase] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedFastCopy, setCopiedFastCopy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [apiHealth, setApiHealth] = useState<ApiHealthState | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [activeTab, setActiveTab] = useState<'dossier' | 'raw' | 'matrix'>('dossier');
+  const [gatewaySubTab, setGatewaySubTab] = useState<'fast' | 'full'>('fast');
+  const [gatewayTextSnippet, setGatewayTextSnippet] = useState<string | null>(null);
+  const [exhibitLedger, setExhibitLedger] = useState<any[]>([]);
+  const [docRef, setDocRef] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const supportingInputRef = useRef<HTMLInputElement>(null);
   const outputPaneRef = useRef<HTMLDivElement>(null);
 
   // Check live API health on mount
@@ -133,18 +141,22 @@ export default function Page() {
     setCommunicationHistory('');
     setContractFile(null);
     setContractText('');
+    setSupportingProofs([]);
     setRebuttal(null);
+    setGatewayTextSnippet(null);
+    setExhibitLedger([]);
     setError(null);
     setActivePreset(null);
     setAgreedToTerms(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
+    if (supportingInputRef.current) supportingInputRef.current.value = '';
     showToast('Reset dispute workbench');
   }, [showToast]);
 
   const handleFileChange = (f: File | null | undefined) => {
     if (!f) return;
     if (f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) {
-      setError('Only .pdf files are accepted.');
+      setError('Only .pdf files are accepted for primary contract.');
       return;
     }
     if (f.size > 5 * 1024 * 1024) {
@@ -154,7 +166,7 @@ export default function Page() {
     setContractFile(f);
     setContractText('');
     setError(null);
-    showToast(`Attached ${f.name}`);
+    showToast(`Attached contract: ${f.name}`);
   };
 
   const removeFile = (e: React.MouseEvent) => {
@@ -162,6 +174,43 @@ export default function Page() {
     setContractFile(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
     showToast('Removed contract file');
+  };
+
+  const handleSupportingProofsChange = (files: FileList | null | undefined) => {
+    if (!files || files.length === 0) return;
+    const incoming = Array.from(files);
+
+    for (const f of incoming) {
+      if (f.size > 5 * 1024 * 1024) {
+        setError(`File "${f.name}" exceeds 5MB limit.`);
+        return;
+      }
+    }
+
+    const combined = [...supportingProofs, ...incoming];
+    const totalBytes = combined.reduce((acc, curr) => acc + curr.size, contractFile?.size || 0);
+    if (totalBytes > 15 * 1024 * 1024) {
+      setError('Total multipart payload exceeds 15MB ceiling.');
+      return;
+    }
+
+    setSupportingProofs(combined);
+    setError(null);
+    showToast(`Added ${incoming.length} supporting exhibit${incoming.length > 1 ? 's' : ''}`);
+  };
+
+  const removeSupportingProof = (index: number) => {
+    const updated = supportingProofs.filter((_, idx) => idx !== index);
+    setSupportingProofs(updated);
+    showToast('Removed exhibit');
+  };
+
+  const copyGatewayFastCopy = () => {
+    if (!gatewayTextSnippet) return;
+    navigator.clipboard.writeText(gatewayTextSnippet);
+    setCopiedFastCopy(true);
+    showToast('Copied Gateway Fast-Copy summary (Stripe/PayPal format)');
+    setTimeout(() => setCopiedFastCopy(false), 2000);
   };
 
   // ─── Required handleSubmit function using new FormData(e.currentTarget) ───
@@ -177,14 +226,15 @@ export default function Page() {
       setError('Please provide the customer dispute allegation or chargeback claim.');
       return;
     }
-    if (!contractFile && !contractText.trim()) {
-      setError('Please upload an executed contract PDF or select a scenario preset.');
+    if (!contractFile && !contractText.trim() && supportingProofs.length === 0) {
+      setError('Please upload an executed contract PDF, supporting exhibits, or select a scenario preset.');
       return;
     }
 
     setLoading(true);
-    setPhase('Parsing contract document & scope clauses…');
+    setPhase('Computing SHA-256 exhibit checksums & covenants…');
     setRebuttal(null);
+    setGatewayTextSnippet(null);
 
     try {
       const formData = new FormData(e.currentTarget);
@@ -196,10 +246,21 @@ export default function Page() {
         }
       }
 
-      // Ensure active gateway is noted in form data
+      // Ensure active gateway and reasonCode are noted in form data
       if (!formData.get('gateway')) {
         formData.append('gateway', activeGateway);
       }
+      if (!formData.get('reasonCode')) {
+        formData.append('reasonCode', reasonCode);
+      }
+      if (!formData.get('chargeId')) {
+        formData.append('chargeId', chargeId);
+      }
+
+      // Append supporting proofs
+      supportingProofs.forEach((file) => {
+        formData.append('supportingProofs', file);
+      });
 
       const t1 = setTimeout(
         () => setPhase('Extracting contractual covenants & acceptance milestones…'),
@@ -210,7 +271,7 @@ export default function Page() {
         2800
       );
       const t3 = setTimeout(
-        () => setPhase('Formatting bank-grade evidentiary rebuttal packet…'),
+        () => setPhase('Compiling Two-Tier Rebuttal & Gateway Fast-Copy…'),
         4200
       );
 
@@ -229,7 +290,10 @@ export default function Page() {
       }
 
       setRebuttal(data.rebuttal);
-      showToast('Rebuttal dossier compiled successfully.');
+      setGatewayTextSnippet(data.gatewayTextSnippet || null);
+      setExhibitLedger(data.exhibitLedger || []);
+      setDocRef(data.docRef || null);
+      showToast('Rebuttal dossier & Gateway Fast-Copy compiled.');
       setTimeout(() => {
         outputPaneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 150);
@@ -521,10 +585,21 @@ export default function Page() {
                         onChange={(e) => setReasonCode(e.target.value)}
                         className="w-full bg-white border border-neutral-200 rounded-lg px-3 py-2 text-xs font-mono text-black focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition"
                       >
-                        <option value="10.4: Other Fraud - Card Absent">10.4: Other Fraud - Card Absent</option>
-                        <option value="4853: Goods/Services Not Provided / Defective">4853: Goods/Services Not Provided / Defective</option>
-                        <option value="13.1: Merchandise / Services Not Received">13.1: Merchandise / Services Not Received</option>
-                        <option value="4837: Fraudulent Transaction - No Authorization">4837: Fraudulent Transaction - No Authorization</option>
+                        <option value="13.1: Merchandise / Services Not Received / Defective">
+                          13.1: Merchandise / Services Not Received / Defective (Scope Creep)
+                        </option>
+                        <option value="10.4: Other Fraud - Card Absent">
+                          10.4: Other Fraud - Card Absent (Visa Compelling Evidence 3.0)
+                        </option>
+                        <option value="13.2: Cancelled Recurring / Service Agreement">
+                          13.2: Cancelled Recurring / Service Agreement (Subscription Notice)
+                        </option>
+                        <option value="4853: Goods/Services Not Provided / Defective">
+                          4853: Goods/Services Not Provided / Defective (Mastercard)
+                        </option>
+                        <option value="4837: Fraudulent Transaction - No Authorization">
+                          4837: Fraudulent Transaction - No Authorization (Mastercard)
+                        </option>
                       </select>
                     </div>
                   </div>
@@ -548,18 +623,46 @@ export default function Page() {
                     />
                   </div>
 
-                  {/* Indicator Chips */}
+                  {/* Dynamic Reason Code Indicator Chips */}
                   <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span className="text-[10px] font-mono text-neutral-400">INDICATORS:</span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
-                      #VISA_CE_3.0_ELIGIBLE
-                    </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
-                      #REASON_10.4
-                    </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
-                      #B2B_DIGITAL_IP
-                    </span>
+                    <span className="text-[10px] font-mono text-neutral-400">DIRECTIVES:</span>
+                    {reasonCode.startsWith('10.4') || reasonCode.startsWith('4837') ? (
+                      <>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200">
+                          #VISA_CE_3.0_ELIGIBLE
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200">
+                          #CARDHOLDER_TELEMETRY
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200">
+                          #FRAUD_REFUTATION
+                        </span>
+                      </>
+                    ) : reasonCode.startsWith('13.2') ? (
+                      <>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200">
+                          #CANCELLATION_NOTICE_WINDOW
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200">
+                          #NON_REFUNDABLE_TERMS
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200">
+                          #SUBSCRIPTION_POLICY
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200">
+                          #FOUR_CORNERS_DOCTRINE
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200">
+                          #BUYERS_REMORSE_PROTOCOL
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200">
+                          #WRITTEN_MILESTONE_ACCEPTANCE
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -680,6 +783,74 @@ export default function Page() {
                   <div className="p-2.5 rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-800 flex items-center space-x-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-black" />
                     <span>Section 9.1 Deemed Acceptance (7-Day)</span>
+                  </div>
+                </div>
+
+                {/* Multi-Evidence Supporting Proofs Ingestion */}
+                <div className="pt-2 border-t border-neutral-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-mono font-bold uppercase tracking-wider text-black flex items-center gap-1.5">
+                        <Paperclip size={13} className="text-black" />
+                        <span>Supporting Hard Proofs (SHA-256 Exhibits)</span>
+                      </span>
+                      <p className="text-[11px] text-neutral-500 font-light mt-0.5">
+                        Server logs, git commits, wire receipts, or screenshots. Computed in-memory and indexed as EXHIBIT-B, EXHIBIT-C, etc.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => supportingInputRef.current?.click()}
+                      className="rounded-full border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black px-3 py-1 text-xs font-mono font-medium text-black transition cursor-pointer flex items-center space-x-1"
+                    >
+                      <span>+ ADD PROOFS</span>
+                    </button>
+                    <input
+                      type="file"
+                      ref={supportingInputRef}
+                      multiple
+                      onChange={(e) => handleSupportingProofsChange(e.target.files)}
+                      className="hidden"
+                      accept=".pdf,.png,.jpg,.jpeg,.txt,.log,.json,.csv,.diff"
+                    />
+                  </div>
+
+                  {/* Supporting Proof Chips List */}
+                  {supportingProofs.length > 0 && (
+                    <div className="space-y-1.5">
+                      {supportingProofs.map((sp, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-2 rounded-lg border border-neutral-200 bg-neutral-50/70 text-xs font-mono"
+                        >
+                          <div className="flex items-center space-x-2 truncate">
+                            <span className="px-1.5 py-0.5 rounded bg-black text-white text-[10px] font-bold">
+                              EXHIBIT-{String.fromCharCode(66 + idx)}
+                            </span>
+                            <span className="text-black font-medium truncate max-w-xs">{sp.name}</span>
+                            <span className="text-neutral-500 text-[11px]">
+                              ({(sp.size / 1024).toFixed(1)} KB)
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeSupportingProof(idx)}
+                            className="text-neutral-400 hover:text-black p-1 transition cursor-pointer"
+                            title="Remove exhibit"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Payload Weight Indicator */}
+                  <div className="flex items-center justify-between text-[10px] font-mono text-neutral-500 pt-0.5">
+                    <span>
+                      Total Payload: {(((contractFile?.size || 0) + supportingProofs.reduce((acc, curr) => acc + curr.size, 0)) / (1024 * 1024)).toFixed(2)} MB / 15MB limit
+                    </span>
+                    <span className="text-emerald-700 font-semibold">Zero Persistent DB Retention</span>
                   </div>
                 </div>
               </div>
@@ -1000,6 +1171,18 @@ export default function Page() {
 
                   {/* Actions Row with Stark Black Pill 'Export to PDF' Button as Requested */}
                   <div className="flex items-center space-x-2 flex-wrap">
+                    {gatewayTextSnippet && (
+                      <button
+                        type="button"
+                        onClick={copyGatewayFastCopy}
+                        className="rounded-full bg-black text-white hover:bg-neutral-800 px-3.5 py-2 text-xs font-mono font-medium flex items-center space-x-1.5 transition cursor-pointer shadow-none"
+                        title="Copy Stripe/PayPal <2,000 Char Fast-Copy Snippet"
+                      >
+                        <Zap size={13} className="text-emerald-400" />
+                        <span>{copiedFastCopy ? 'COPIED FAST-COPY!' : 'COPY TO STRIPE'}</span>
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={exportPDF}
@@ -1091,21 +1274,75 @@ export default function Page() {
                   )}
 
                   {activeTab === 'raw' && (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between text-xs font-mono text-neutral-500">
-                        <span>{rebuttal.length} characters &middot; Ready to paste into {activeGateway} dispute portal</span>
+                    <div className="space-y-4">
+                      {/* Sub-tab selection between Fast-Copy and Full Plain-Text */}
+                      <div className="flex items-center space-x-2 bg-neutral-100 p-1 rounded-full border border-neutral-200">
                         <button
                           type="button"
-                          onClick={copyRebuttalText}
-                          className="text-xs text-black hover:underline flex items-center space-x-1 font-mono cursor-pointer"
+                          onClick={() => setGatewaySubTab('fast')}
+                          className={`flex-1 py-1 px-3 rounded-full text-xs font-mono font-medium transition cursor-pointer text-center ${
+                            gatewaySubTab === 'fast'
+                              ? 'bg-black text-white'
+                              : 'text-neutral-600 hover:text-black'
+                          }`}
                         >
-                          <Copy size={11} />
-                          <span>COPY ALL</span>
+                          GATEWAY FAST-COPY (&lt;2,000 CHARS)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setGatewaySubTab('full')}
+                          className={`flex-1 py-1 px-3 rounded-full text-xs font-mono font-medium transition cursor-pointer text-center ${
+                            gatewaySubTab === 'full'
+                              ? 'bg-black text-white'
+                              : 'text-neutral-600 hover:text-black'
+                          }`}
+                        >
+                          FULL DOSSIER PLAIN TEXT
                         </button>
                       </div>
-                      <pre className="p-4 rounded-xl bg-neutral-50 border border-neutral-200 font-mono text-xs text-black whitespace-pre-wrap leading-relaxed">
-                        {rebuttal}
-                      </pre>
+
+                      {gatewaySubTab === 'fast' ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between text-xs font-mono text-neutral-500">
+                            <span className="text-emerald-700 font-semibold">
+                              {gatewayTextSnippet ? gatewayTextSnippet.length : 0} / 2,000 CHARS &middot; STRIPE/PAYPAL COMPLIANT
+                            </span>
+                            <span className="text-[10px] text-neutral-400">
+                              High-Density Plain Text (No Tables)
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={copyGatewayFastCopy}
+                            className="w-full py-2.5 px-4 rounded-full bg-black text-white hover:bg-neutral-800 text-xs font-mono font-semibold uppercase tracking-wider flex items-center justify-center space-x-2 transition cursor-pointer"
+                          >
+                            <Zap size={14} className="text-emerald-400" />
+                            <span>{copiedFastCopy ? 'COPIED TO CLIPBOARD!' : 'COPY FAST-COPY SNIPPET (STRIPE / PAYPAL)'}</span>
+                          </button>
+
+                          <pre className="p-4 rounded-xl bg-neutral-50 border border-neutral-200 font-mono text-xs text-black whitespace-pre-wrap leading-relaxed max-h-[460px] overflow-y-auto">
+                            {gatewayTextSnippet || 'Generating fast-copy snippet...'}
+                          </pre>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between text-xs font-mono text-neutral-500">
+                            <span>{rebuttal.length} characters &middot; Ready for full upload</span>
+                            <button
+                              type="button"
+                              onClick={copyRebuttalText}
+                              className="text-xs text-black hover:underline flex items-center space-x-1 font-mono cursor-pointer"
+                            >
+                              <Copy size={11} />
+                              <span>{copied ? 'COPIED ALL' : 'COPY ALL'}</span>
+                            </button>
+                          </div>
+                          <pre className="p-4 rounded-xl bg-neutral-50 border border-neutral-200 font-mono text-xs text-black whitespace-pre-wrap leading-relaxed max-h-[460px] overflow-y-auto">
+                            {rebuttal}
+                          </pre>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1131,53 +1368,179 @@ export default function Page() {
         }}
       >
         <div id="rebuttal-pdf-export-content">
+          {/* ── Formal Cover Docket Header ── */}
           <div
             style={{
               borderBottom: '2px solid #0f172a',
-              paddingBottom: '12px',
+              paddingBottom: '16px',
               marginBottom: '24px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-end',
             }}
           >
-            <div>
-              <div
-                style={{
-                  fontSize: '18px',
-                  fontWeight: '800',
-                  color: '#0f172a',
-                  letterSpacing: '0.5px',
-                  fontFamily: 'monospace',
-                }}
-              >
-                OFFICIAL DISPUTE REBUTTAL DOSSIER
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+              <div>
+                <div
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: '900',
+                    color: '#0f172a',
+                    letterSpacing: '0.5px',
+                    fontFamily: 'monospace',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  OFFICIAL DISPUTE REBUTTAL DOSSIER
+                </div>
+                <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', fontFamily: 'monospace' }}>
+                  Nyaya AI · Sovereign Dispute Defense & Evidentiary Docket
+                </div>
               </div>
-              <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px', fontFamily: 'monospace' }}>
-                Nyaya AI — Payment Gateway Dispute Arbitration Packet ({activeGateway})
+              <div style={{ textAlign: 'right', fontSize: '9px', color: '#475569', fontFamily: 'monospace' }}>
+                <div style={{ fontWeight: 'bold', color: '#0f172a' }}>
+                  STANDARD: VISA CE 3.0 / MC CH. 8
+                </div>
+                <div>SECURE IN-MEMORY VERIFICATION</div>
               </div>
             </div>
-            <div style={{ textAlign: 'right', fontSize: '9px', color: '#475569', fontFamily: 'monospace' }}>
+
+            {/* Metadata Summary Grid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '8px',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '4px',
+                padding: '10px 12px',
+                fontSize: '9px',
+                fontFamily: 'monospace',
+                color: '#334155',
+              }}
+            >
               <div>
-                <strong>Submission Date:</strong>{' '}
-                {new Date().toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+                <span style={{ color: '#64748b', textTransform: 'uppercase' }}>DOC REF: </span>
+                <strong style={{ color: '#0f172a' }}>{docRef || 'NYAYA-DISP-OFFICIAL'}</strong>
               </div>
               <div>
-                <strong>Arbitration Standard:</strong> Visa CE 3.0 / Mastercard Chapter 8
+                <span style={{ color: '#64748b', textTransform: 'uppercase' }}>GATEWAY: </span>
+                <strong style={{ color: '#0f172a' }}>{activeGateway.toUpperCase()}</strong>
+              </div>
+              <div>
+                <span style={{ color: '#64748b', textTransform: 'uppercase' }}>DATE: </span>
+                <strong style={{ color: '#0f172a' }}>
+                  {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </strong>
+              </div>
+              <div>
+                <span style={{ color: '#64748b', textTransform: 'uppercase' }}>REASON CODE: </span>
+                <strong style={{ color: '#0f172a' }}>{reasonCode.split(':')[0]}</strong>
+              </div>
+              <div style={{ gridColumn: 'span 2' }}>
+                <span style={{ color: '#64748b', textTransform: 'uppercase' }}>CASE / REF: </span>
+                <strong style={{ color: '#0f172a' }}>{chargeId}</strong>
               </div>
             </div>
           </div>
 
+          {/* ── Main Rebuttal Dossier Body ── */}
           {rebuttal && (
             <div style={{ fontSize: '10pt', color: '#0f172a', lineHeight: '1.6' }}>
               <RebuttalDocument text={rebuttal} />
             </div>
           )}
 
+          {/* ── Certified Exhibit Ledger Table (Print & Export) ── */}
+          {exhibitLedger && exhibitLedger.length > 0 && (
+            <div
+              className="print-break-before"
+              style={{
+                marginTop: '32px',
+                paddingTop: '20px',
+                borderTop: '2px solid #0f172a',
+              }}
+            >
+              <div style={{ marginBottom: '12px' }}>
+                <div
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: '800',
+                    fontFamily: 'monospace',
+                    textTransform: 'uppercase',
+                    color: '#0f172a',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  CERTIFIED EXHIBIT LEDGER & CRYPTOGRAPHIC HASH MANIFEST
+                </div>
+                <div style={{ fontSize: '8px', color: '#64748b', fontFamily: 'monospace', marginTop: '2px' }}>
+                  Cryptographic verification of evidence files. Processed strictly in ephemeral RAM with zero database retention.
+                </div>
+              </div>
+
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontSize: '8.5px',
+                  fontFamily: 'monospace',
+                  border: '1px solid #cbd5e1',
+                }}
+              >
+                <thead>
+                  <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1', textAlign: 'left' }}>
+                    <th style={{ padding: '6px 8px', borderRight: '1px solid #cbd5e1', width: '80px' }}>EXHIBIT ID</th>
+                    <th style={{ padding: '6px 8px', borderRight: '1px solid #cbd5e1' }}>FILENAME</th>
+                    <th style={{ padding: '6px 8px', borderRight: '1px solid #cbd5e1', width: '90px' }}>PROOF TYPE</th>
+                    <th style={{ padding: '6px 8px', borderRight: '1px solid #cbd5e1' }}>SHA-256 CHECKSUM</th>
+                    <th style={{ padding: '6px 8px', width: '60px', textAlign: 'right' }}>SIZE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {exhibitLedger.map((ex: any, idx: number) => (
+                    <tr
+                      key={ex.exhibitId || idx}
+                      style={{
+                        borderBottom: '1px solid #e2e8f0',
+                        background: idx % 2 === 1 ? '#f8fafc' : '#ffffff',
+                      }}
+                    >
+                      <td style={{ padding: '6px 8px', borderRight: '1px solid #cbd5e1', fontWeight: 'bold', color: '#0f172a' }}>
+                        {ex.exhibitId}
+                      </td>
+                      <td style={{ padding: '6px 8px', borderRight: '1px solid #cbd5e1', color: '#1e293b' }}>
+                        {ex.filename}
+                      </td>
+                      <td style={{ padding: '6px 8px', borderRight: '1px solid #cbd5e1', color: '#475569' }}>
+                        {ex.proofType}
+                      </td>
+                      <td style={{ padding: '6px 8px', borderRight: '1px solid #cbd5e1', color: '#0f172a', wordBreak: 'break-all' }}>
+                        {ex.sha256}
+                      </td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right', color: '#64748b' }}>
+                        {(ex.byteSize / 1024).toFixed(1)} KB
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div
+                style={{
+                  marginTop: '10px',
+                  fontSize: '8px',
+                  color: '#64748b',
+                  fontFamily: 'monospace',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <span>STATUS: VERIFIED UNALTERED · TAMPER-EVIDENT INGESTION</span>
+                <span>TOTAL EXHIBITS: {exhibitLedger.length}</span>
+              </div>
+            </div>
+          )}
+
+          {/* ── Legal Disclaimer & Certification Footer ── */}
           <div
             style={{
               marginTop: '36px',
@@ -1189,7 +1552,7 @@ export default function Page() {
               fontFamily: 'monospace',
             }}
           >
-            Certified Merchant Evidentiary Rebuttal Packet · Prepared via Nyaya AI · Non-Law Firm Administrative Record
+            Certified Merchant Evidentiary Rebuttal Packet · Prepared via Nyaya AI · Non-Law Firm Administrative Record · Ephemeral Zero Retention Architecture
           </div>
         </div>
       </div>

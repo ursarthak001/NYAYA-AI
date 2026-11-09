@@ -1336,6 +1336,10 @@ body::before {
   .navbar, .hero, .form-column, .sidebar-column, .footer, .btn-ghost, .btn-primary, .btn-secondary, .tabs-nav {
     display: none !important;
   }
+  .print-break-before {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
   .page-wrap, .main, .result-card, .rebuttal-body {
     display: block !important;
     width: 100% !important;

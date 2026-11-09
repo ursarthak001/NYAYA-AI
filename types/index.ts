@@ -29,9 +29,21 @@ export interface ApiHealthState {
 export interface RebuttalApiResponse {
   success: boolean;
   rebuttal?: string;
+  gatewayTextSnippet?: string;
   evidentiaryReadiness?: number;
   model?: string;
   mode?: string;
   note?: string;
   error?: string;
+  docRef?: string;
+  gateway?: string;
+  reasonCode?: string;
+  exhibitLedger?: Array<{
+    exhibitId: string;
+    filename: string;
+    proofType: string;
+    sha256: string;
+    byteSize: number;
+    extractedText: string;
+  }>;
 }
